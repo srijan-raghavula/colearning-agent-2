@@ -1,0 +1,55 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Learning Studio</h1></div>
+      <a class="btn btn-secondary" href="/student/courses">My Courses</a>
+    </header>
+    <main class="app-content learning-studio-page">
+      <section class="learning-studio-hero">
+        <div>
+          <span class="badge badge-info">YOUR PERSONAL CLASSROOM</span>
+          <h2>Pick a course. Start learning.</h2>
+          <p>Explore published chapters, get a clear guided lesson, and ask questions as you go.</p>
+        </div>
+        <div class="studio-hero-mark" aria-hidden="true">✦</div>
+      </section>
+      {{if .Courses}}
+      <div class="studio-course-grid">
+        {{range .Courses}}
+        {{$course := .Course}}
+        <section class="card studio-course-card">
+          <div class="studio-course-heading">
+            <span class="badge badge-student">{{.Course.Code}}</span>
+            <span class="muted small">{{len .Chapters}} published chapter{{if ne (len .Chapters) 1}}s{{end}}</span>
+          </div>
+          <h2>{{.Course.Name}}</h2>
+          <p class="muted">{{if .Course.Description}}{{.Course.Description}}{{else}}No course description yet.{{end}}</p>
+          {{if .Chapters}}
+          <div class="studio-chapter-list">
+            {{range .Chapters}}
+            <a class="studio-chapter-link" href="/student/courses/{{$course.ID}}/chapters/{{.ID}}">
+              <span class="chapter-order">{{.Position}}</span>
+              <span class="studio-chapter-copy">
+                <b>{{.Title}}</b>
+                <small>{{if .Description}}{{truncate .Description 120}}{{else}}Open guided lesson{{end}}</small>
+              </span>
+              <span class="studio-chapter-arrow" aria-hidden="true">→</span>
+            </a>
+            {{end}}
+          </div>
+          {{else}}
+          <div class="studio-empty-chapters">Your instructor has not published chapters for this course yet.</div>
+          {{end}}
+          <div class="studio-course-footer"><span>{{.Course.FacultyName}}</span><a href="/student/courses/{{$course.ID}}">Course details →</a></div>
+        </section>
+        {{end}}
+      </div>
+      {{else}}
+      <section class="card">{{template "emptystate" (dict "Headline" "No enrolled courses yet" "Body" "Your courses will appear here after an instructor enrolls you.")}}</section>
+      {{end}}
+    </main>
+  </div>
+</div>
+{{end}}

@@ -188,8 +188,78 @@ func seedShowcase(db *sql.DB) error {
 				ensureSubmission(db, aid, sid, as, plan, now)
 			}
 		}
+		if cs.Code == "CS204" {
+			if err := ensureLearningChapters(db, cid); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
+}
+
+func ensureLearningChapters(db *sql.DB, courseID int64) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var count int
+	if err := tx.QueryRow(`SELECT COUNT(1) FROM course_chapters WHERE course_id = ?`, courseID).Scan(&count); err != nil {
+		return err
+	}
+	if count > 0 {
+		return tx.Commit()
+	}
+	chapters := []struct {
+		title, description, content string
+	}{
+		{
+			title:       "Introduction to Relational Databases",
+			description: "Learn how relational databases organize information into tables and connect related records.",
+			content: `## Data in related tables
+A relational database stores information in tables. Each table describes one kind of thing, such as students or courses. A row is one record, and a column stores one attribute of that record.
+
+## Connecting information
+Instead of repeating course details in every student record, a database can keep students and courses in separate tables and connect them through an enrollment table. This makes relationships explicit and helps avoid duplicated data.
+
+## Why structure matters
+Clear tables and relationships make information easier to query and update. Keys identify records and provide reliable links between tables; the next chapter explores them in detail.`,
+		},
+		{
+			title:       "Relational Model, Keys and Integrity Constraints",
+			description: "Understand relations, primary and foreign keys, and the rules that keep connected data valid.",
+			content: `## The relational model
+A relational database organizes data into relations, commonly shown as tables. Each row represents one record and each column represents an attribute. For example, a Students table can have student_id, name, and email columns.
+
+## Primary keys: identifying a row
+A primary key is a column, or combination of columns, that uniquely identifies each row in a table. In a Students table, student_id can be the primary key. A primary key must identify one row unambiguously and cannot be NULL.
+
+## Foreign keys: connecting tables
+A foreign key is a column, or combination of columns, whose values refer to a key in another table (or to a key in the same table). For example, an Enrollments table can store student_id as a foreign key that references Students.student_id, and course_id can reference Courses.course_id.
+
+## Integrity constraints
+Integrity constraints are rules that keep data valid. NOT NULL requires a value, UNIQUE prevents duplicate values, CHECK restricts values to a condition, and a foreign-key constraint requires a referenced record to exist. Together, these rules prevent invalid or disconnected records.
+
+## A practical example
+When a student enrolls in a course, an Enrollments row records both IDs. The primary key of Enrollments identifies that enrollment; its foreign keys connect it to an existing student and course. If the referenced student or course does not exist, the foreign-key constraint rejects the invalid relationship.
+
+## Remember
+- Primary key: uniquely identifies a row in its own table.
+- Foreign key: links a row to a key in a related table.
+- Integrity constraints: enforce rules that keep stored data consistent.`,
+		},
+	}
+	now := time.Now().UTC().Format(time.DateTime)
+	for position, chapter := range chapters {
+		if _, err := tx.Exec(`INSERT INTO course_chapters
+			(course_id, title, description, content, position, published, created_at, updated_at)
+			VALUES (?, ?, ?, ?, ?, 1, ?, ?)`,
+			courseID, chapter.title, chapter.description, chapter.content, position+1, now, now); err != nil {
+			return fmt.Errorf("seed Learning Studio chapter: %w", err)
+		}
+	}
+	return tx.Commit()
 }
 
 // enrolledInCS302: CS302 roster stays a conversation-sized team (5 of 8).

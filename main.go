@@ -78,8 +78,13 @@ func main() {
 	// Evaluation engine: real provider when credentials exist, DEMO otherwise.
 	st := store.New(db)
 	var engine *evaluator.Engine
+	var learningAI handlers.LearningAIProvider
 	if cfg.AIEnabled() {
-		engine = &evaluator.Engine{Provider: &evaluator.Provider{BaseURL: cfg.AIBaseURL, APIKey: cfg.AIKey, Model: cfg.AIModel}, MaxTokens: cfg.AIMaxTokens}
+		provider := &evaluator.Provider{BaseURL: cfg.AIBaseURL, APIKey: cfg.AIKey, Model: cfg.AIModel}
+		engine = &evaluator.Engine{Provider: provider, MaxTokens: cfg.AIMaxTokens}
+		if strings.TrimSpace(cfg.AIBaseURL) != "" {
+			learningAI = provider
+		}
 		log.Printf("evaluation mode: AI (%s)", cfg.AIModel)
 	} else {
 		engine = &evaluator.Engine{}
@@ -102,6 +107,7 @@ func main() {
 		CSRF:         middleware.CSRF{Secret: csrfSecret(db)},
 		Tpl:          tpl,
 		AIOn:         cfg.AIEnabled(),
+		LearningAI:   learningAI,
 		Store:        st,
 		WorkerNotify: worker.Notify,
 		AgentEngine:  agentEngine,

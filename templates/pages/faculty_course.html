@@ -28,6 +28,16 @@
         </form>
       </section>
 
+      <section class="card">
+        <div class="card-title-row">
+          <div>
+            <h2>AI Learning Studio chapters</h2>
+            <p class="muted small">Create structured learning content for students enrolled in this course.</p>
+          </div>
+          <a class="btn btn-secondary btn-sm" href="/faculty/courses/{{.Course.ID}}/chapters">Manage chapters</a>
+        </div>
+      </section>
+
       <div class="card-grid">
         <section class="card">
           <h2>Enrolled students <span class="muted">({{len .Students}})</span></h2>
