@@ -1,0 +1,93 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title">
+        <h1>{{.Course.Code}} · {{.Course.Name}}</h1>
+        <p class="muted">Taught by you · created {{formatDate .Course.CreatedAt}}</p>
+      </div>
+      <a class="btn btn-primary" href="/faculty/courses/{{.Course.ID}}/assignments/new">New assignment</a>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      <section class="card">
+        <h2>Course details</h2>
+        <form method="post" action="/faculty/courses/{{.Course.ID}}" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="formgrid">
+            <div class="field"><label for="name">Course name</label>
+              <input id="name" name="name" required value="{{if .Values.name}}{{.Values.name}}{{else}}{{.Course.Name}}{{end}}"></div>
+            <div class="field"><label for="code">Course code</label>
+              <input id="code" name="code" required value="{{.Course.Code}}"></div>
+          </div>
+          <div class="field"><label for="description">Description</label>
+            <textarea id="description" name="description" rows="3">{{.Course.Description}}</textarea></div>
+          <div class="form-actions"><button class="btn btn-primary" type="submit">Save changes</button></div>
+        </form>
+      </section>
+
+      <div class="card-grid">
+        <section class="card">
+          <h2>Enrolled students <span class="muted">({{len .Students}})</span></h2>
+          {{if .Students}}
+          <table class="table">
+            <thead><tr><th>Name</th><th>Email</th><th class="th-actions">Actions</th></tr></thead>
+            <tbody>
+              {{range .Students}}
+              <tr>
+                <td>{{.Name}}</td><td class="muted">{{.Email}}</td>
+                <td class="th-actions">
+                  <form method="post" action="/faculty/courses/{{$.Course.ID}}/students/{{.ID}}/remove">
+                    <input type="hidden" name="_csrf" value="{{$.CSRFValue}}">
+                    <button type="submit" class="btn btn-ghost btn-danger-ghost">Remove</button>
+                  </form>
+                </td>
+              </tr>{{end}}
+            </tbody>
+          </table>
+          {{else}}
+          <p class="muted">No students enrolled yet.</p>
+          {{end}}
+          <hr class="card-sep">
+          <h3 style="font-size:14px">Add a student to this course</h3>
+          <form method="post" action="/faculty/courses/{{.Course.ID}}/students" class="row-form">
+            <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+            {{if .EnrollOpts}}
+            <select class="input-wide" name="student_id" required aria-label="Student to enroll">
+              <option value="">Select a student…</option>
+              {{range .EnrollOpts}}<option value="{{.ID}}">{{.Label}}</option>{{end}}
+            </select>
+            <button class="btn btn-secondary" type="submit">Enroll</button>
+            {{else}}
+            <input type="hidden" name="student_id" value="">
+            <input class="input-wide" type="email" name="email" placeholder="student email to enroll" aria-label="Student email">
+            <button class="btn btn-secondary" type="submit">Enroll</button>
+            {{end}}
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Assignments <span class="muted">({{len .Assignments}})</span></h2>
+          {{if .Assignments}}
+          <table class="table">
+            <thead><tr><th>Title</th><th>Due</th><th>Status</th></tr></thead>
+            <tbody>
+              {{range .Assignments}}
+              <tr>
+                <td><a href="/faculty/assignments/{{.ID}}">{{.Title}}</a><div class="muted small">{{.Topic}}</div></td>
+                <td>{{formatDue .DueDate}}</td>
+                <td>{{if .Published}}<span class="badge badge-success">Published</span>{{else}}<span class="badge badge-warning">Draft</span>{{end}}</td>
+              </tr>{{end}}
+            </tbody>
+          </table>
+          {{else}}
+          {{template "emptystate" (dict "Headline" "No assignments" "Body" "Create the first assignment for this course." "Href" (printf "/faculty/courses/%d/assignments/new" .Course.ID) "ActionLabel" "Create assignment")}}
+          {{end}}
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

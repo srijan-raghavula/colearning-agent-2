@@ -1,0 +1,13 @@
+{{define "flashblock"}}
+{{if .Flash}}<div class="notice notice-info" role="status">{{.Flash}}</div>{{end}}
+{{if .Error}}<div class="notice notice-error" role="alert">{{.Error}}</div>{{end}}
+{{if .Ok}}<div class="notice notice-success" role="status">{{.Ok}}</div>{{end}}
+{{end}}
+
+{{define "emptystate"}}
+<div class="empty-state">
+  <h3>{{.Headline}}</h3>
+  <p class="muted">{{.Body}}</p>
+  {{if .Href}}<a class="btn btn-primary" href="{{.Href}}">{{.ActionLabel}}</a>{{end}}
+</div>
+{{end}}

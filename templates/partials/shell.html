@@ -1,0 +1,32 @@
+{{/* Sidebar: brand, role navigation, pinned profile with sign-out. Data: PageData. */}}
+{{define "sidebar"}}
+<aside class="app-sidebar">
+  <button type="button" class="sidebar-toggle-close" aria-label="Close navigation">&#10005;</button>
+  <div class="sidebar-brand">
+    <span class="brand-mark" aria-hidden="true">E</span>
+    <span>
+      <span class="brand-name">EDUCORE</span><br>
+      <span class="brand-sub">ASSESSMENT INTELLIGENCE</span>
+    </span>
+  </div>
+  <div class="sidebar-section">{{if eq .Role "FACULTY"}}Teaching{{else}}Learning{{end}}</div>
+  <nav class="sidebar-nav" aria-label="Main">
+    {{range .Nav}}
+      <a href="{{.Href}}" class="nav-item{{if .Active}} is-active{{end}}">
+        {{icon .Icon}}<span>{{.Label}}</span>
+      </a>
+    {{end}}
+  </nav>
+  <div class="sidebar-profile">
+    <span class="avatar" aria-hidden="true">{{initials .UserName}}</span>
+    <span class="profile-meta">
+      <span class="profile-name">{{.UserName}}</span><br>
+      <span class="profile-role">{{.RoleLabel}}</span>
+    </span>
+    <form method="post" action="/logout" class="profile-signout">
+      <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+      <button type="submit" title="Sign out" aria-label="Sign out">{{icon "log-out"}}</button>
+    </form>
+  </div>
+</aside>
+{{end}}

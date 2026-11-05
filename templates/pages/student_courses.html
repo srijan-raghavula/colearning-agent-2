@@ -1,0 +1,42 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header"><div class="header-title"><h1>My Courses</h1><p class="muted">Subjects you are enrolled in, with context from approved evaluations.</p></div></header>
+    <main class="app-content">
+      {{if .Rows}}
+      <div class="card-grid">
+        {{range .Rows}}
+        <a class="card course-card" href="/student/courses/{{.C.ID}}">
+          <div class="course-card-top">
+            <span class="badge badge-student">{{.C.Code}}</span>
+            <span class="muted small">{{.C.FacultyName}}</span>
+          </div>
+          <h2>{{.C.Name}}</h2>
+          <p class="muted">{{if .C.Description}}{{truncate .C.Description 110}}{{else}}No description.{{end}}</p>
+          {{if .HasResults}}
+          <div style="display:flex;align-items:center;gap:8px;margin:10px 0 2px">
+            <span class="muted small" style="min-width:96px">Comprehension</span>
+            <span style="flex:1">{{progress .Comprehension}}</span>
+            <b class="small {{percentClass .Comprehension}}">{{percent .Comprehension}}</b>
+          </div>
+          <p class="muted small" style="margin:0">{{.Evaluated}} evaluated assignment(s)</p>
+          {{else}}
+          <div class="muted small" style="margin:10px 0 0">
+            <span class="badge badge-info">No approved results yet</span>
+            Evaluation results appear here once faculty approve them.
+          </div>
+          {{end}}
+          <div class="course-card-stats">
+            <span><b>{{.Completed}}</b> / {{.Published}} submitted</span>
+          </div>
+        </a>
+        {{end}}
+      </div>
+      {{else}}
+      <div class="card">{{template "emptystate" (dict "Headline" "No courses yet" "Body" "Your courses will appear here once a faculty member enrolls you.")}}</div>
+      {{end}}
+    </main>
+  </div>
+</div>
+{{end}}

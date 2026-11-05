@@ -1,0 +1,59 @@
+/* Phase 3–5 component styles: rubric builder, review workspace, results. */
+
+/* Rubric editor */
+.rubric-total { font-size: 13.5px; padding: 8px 0; display: flex; align-items: center; gap: 10px; }
+.rubric-total strong { font-size: 16px; font-weight: 700; }
+.rubric-total.is-complete strong { color: var(--success); }
+.rubric-total.is-error strong { color: var(--danger); }
+.rubric-total .pct-pill { font-size: 11px; padding: 2px 8px; border-radius: 999px; background: #EEF1F7; color: var(--text-secondary); }
+.rubric-total.is-complete .pct-pill { background: var(--success-soft); color: var(--success); }
+.criterion-editor { display: grid; gap: 12px; margin: 12px 0; }
+.criterion-row { border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface-subtle); display: grid; gap: 10px; position: relative; }
+.criterion-grid { display: grid; gap: 0 14px; grid-template-columns: 2fr 1fr 1fr; }
+.criterion-grid .field-wide { grid-column: 1 / -1; }
+@media (max-width: 720px) { .criterion-grid { grid-template-columns: 1fr; } }
+.criterion-num {
+  position: absolute; top: -9px; left: 14px;
+  background: var(--primary-soft); color: var(--primary);
+  font-size: 10.5px; font-weight: 700; border-radius: 999px; padding: 1px 8px;
+}
+
+/* Evaluation workspace */
+.review-grid { display: grid; gap: 18px; grid-template-columns: 1fr; align-items: start; }
+@media (min-width: 1100px) { .review-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); } }
+.instructions-box { border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 14px; background: var(--surface-subtle); }
+.instructions-box summary { font-size: 13px; font-weight: 600; cursor: pointer; }
+.instructions-box[open] summary { margin-bottom: 8px; }
+.evidence-list { margin: 8px 0 0; padding-left: 18px; }
+.evidence-list li { font-size: 12.5px; margin-bottom: 6px; }
+.evidence-list q { color: var(--text); quotes: "“" "”"; background: var(--primary-soft); padding: 0 3px; border-radius: 4px; }
+.rubric-workspace td { vertical-align: top; }
+.override-form input[type="number"] { width: 84px; }
+.override-form input[type="text"] { width: 100%; margin-top: 6px; font-size: 12.5px; }
+.override-row { display: flex; gap: 6px; }
+.warnings-box { margin-top: 12px; border: 1px solid rgba(180,83,9,0.25); background: var(--warning-soft); border-radius: var(--radius-sm); padding: 8px 12px; }
+.warnings-box summary { font-size: 13px; font-weight: 600; color: var(--warning); cursor: pointer; }
+.warning-list { margin: 8px 0 0; padding-left: 18px; font-size: 13px; display: grid; gap: 4px; }
+.bullets { margin: 6px 0 12px; padding-left: 18px; font-size: 14px; }
+.bullets li { margin-bottom: 5px; }
+
+.manual-row { display: grid; gap: 6px; grid-template-columns: 1fr; margin-bottom: 10px; }
+@media (min-width: 640px) { .manual-row { grid-template-columns: 180px 110px 1fr; align-items: center; } }
+
+/* Student published results */
+.results-panel { border-left: 3px solid var(--success); }
+.criterion-row-result { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 12px; }
+.criterion-row-result:last-of-type { border-bottom: 0; }
+
+/* Deadline & activity lists */
+.deadline-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.deadline-row:last-child { border-bottom: 0; }
+.deadline-when { font-size: 12px; color: var(--text-secondary); min-width: 120px; }
+.deadline-when b { color: var(--text); display: block; font-size: 13px; }
+.activity-user { display: flex; align-items: center; gap: 9px; }
+.avatar-sm {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--primary-soft); color: var(--primary);
+  font-size: 11px; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 28px;
+}

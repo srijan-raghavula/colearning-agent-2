@@ -1,0 +1,192 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title">
+        <h1>Evaluate · {{.Submission.StudentName}}</h1>
+        <p class="muted">{{.Assignment.CourseCode}} · {{.Assignment.Title}} · due {{formatDue .Assignment.DueDate}}
+        {{if .Late}} · <span class="badge badge-warning">Late</span>{{end}}</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="/faculty/submissions/{{.Submission.ID}}/agent">{{icon "sparkles"}} Agent console</a>
+        <span class="badge {{evalStatusClass .EvalStatus}}">{{evalStatusText .EvalStatus}}</span>
+        <form method="post" action="/faculty/submissions/{{.Submission.ID}}/evaluate" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <button type="submit" class="btn btn-secondary">{{if .Eval}}Re-evaluate{{else}}Run evaluation{{end}}</button>
+        </form>
+      </div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      {{if not .Assignment.Published}}<div class="notice notice-error">Draft assignment — evaluation disabled.</div>{{end}}
+
+      <!-- ======== Evaluator status ======== -->
+      {{if eq .EvalStatus "FAILED"}}
+      <div class="notice notice-error">
+        The last evaluation attempt {{if .Eval}}{{if .Attempt}}{{/* attempt numbers appear on rows below */}}{{end}}{{end}}
+        failed. The submission is safe and can be retried or graded manually below.
+      </div>
+      {{end}}
+
+      {{if .Eval}}
+      {{if .Eval.Approved}}
+      <div class="notice notice-success">Published result — final score <strong>{{printf "%.2f" .Eval.EffectiveTotal}}</strong> / {{printf "%.0f" .Eval.MaxTotal}} (approved {{formatDue .Eval.ApprovedAt}} by {{.Eval.ApprovedBy}}).</div>
+      {{else}}
+      <div class="notice notice-info">Provisional result (attempt {{.Eval.Attempt}}, method {{.Eval.Method}}) — students see no marks until you approve.</div>
+      {{end}}
+      {{end}}
+
+      {{if and .Submission.ExtractedText (not .Eval.ExtractionOK) (ne .EvalStatus "NOT_REQUESTED")}}
+      <div class="notice notice-warning">Document text extraction failed; evaluation may be incomplete. Review manually.</div>
+      {{end}}
+
+      <div class="review-grid">
+        <!-- ======== Left: the answer ======== -->
+        <section class="card">
+          <div class="section-head">
+            <h2>Submitted answer</h2>
+            <span class="muted small">received {{formatDue .Submission.SubmittedAt}}</span>
+          </div>
+          {{if .Assignment.Description}}
+          <details class="instructions-box"><summary>Assignment instructions</summary>
+            <div class="assignment-body">{{.Assignment.Description}}</div>
+          </details>
+          {{end}}
+          {{if .Submission.Content}}
+          <pre class="answer-text" style="min-height:220px">{{.Submission.Content}}</pre>
+          {{else}}
+          <p class="muted">No text answer was provided.</p>
+          {{end}}
+
+          {{if .Submission.Filename}}
+          <hr class="card-sep">
+          <h4 style="font-size:13px">Attached document</h4>
+          <p>
+            <code>{{.Submission.Filename}}</code>
+            <a class="btn btn-ghost" href="/faculty/submissions/{{.Submission.ID}}/download">Download</a>
+          </p>
+          {{if .Submission.ExtractedText}}
+          <h4 style="font-size:13px;margin-top:10px">Extracted text</h4>
+          {{if (hasPrefix .Submission.ExtractedText "EXTRACTION_FAILED")}}
+          <div class="notice notice-error" style="margin-top:6px">{{.Submission.ExtractedText}}</div>
+          {{else}}
+          <pre class="answer-text extracted">{{.Submission.ExtractedText}}</pre>
+          {{end}}
+          {{end}}
+          {{end}}
+        </section>
+
+        <!-- ======== Right: rubric workspace ======== -->
+        <section class="card">
+          <div class="section-head">
+            <h2>Grading workspace</h2>
+            {{if .Eval}}<span class="badge badge-neutral">method {{.Eval.Method}} · confidence {{.Eval.Confidence}}</span>{{end}}
+          </div>
+
+          {{if .Eval}}
+          <table class="table rubric-workspace">
+            <thead><tr><th>Criterion</th><th>Model pts</th><th>Effective pts</th><th>Override</th></tr></thead>
+            <tbody>
+              {{range .Eval.Criteria}}
+              {{$cid := .CriterionID}}
+              <tr>
+                <td>
+                  <strong>{{.Title}}</strong> <span class="muted small">/{{printf "%.0f" .MaxPoints}}</span>
+                  <div class="muted small">{{.Description}}</div>
+                  {{if .Evidence}}
+                  <ul class="evidence-list">
+                    {{range .Evidence}}
+                    <li><q>{{.Quote}}</q><div class="muted small">{{.Explanation}}</div></li>
+                    {{end}}
+                  </ul>
+                  {{end}}
+                  {{if .Feedback}}<div class="small" style="margin-top:6px">{{.Feedback}}</div>{{end}}
+                  {{if .Override}}
+                  <div class="muted small" style="margin-top:4px">Overridden by {{.Override.FacultyName}} {{formatDue .Override.CreatedAt}}{{if .Override.Feedback}} — “{{.Override.Feedback}}”{{end}}</div>
+                  {{end}}
+                  {{if .DroppedCount}}
+                  <div class="badge badge-warning" style="margin-top:4px">{{.DroppedCount}} invented quotation(s) rejected</div>
+                  {{end}}
+                </td>
+                <td>{{printf "%.2f" .ModelPoints}}</td>
+                <td><strong>{{printf "%.2f" .EffectivePts}}</strong></td>
+                <td>
+                  {{if not $.Assignment.Published}}{{else}}
+                  <form method="post" action="/faculty/evaluations/{{$.Eval.ID}}/range/{{.CriterionID}}" class="override-form">
+                    <input type="hidden" name="criterion_id" value="{{$cid}}">
+                    <input type="hidden" name="_csrf" value="{{$.CSRFValue}}">
+                    <div class="override-row">
+                      <input type="number" name="points" min="0" max="{{printf "%.0f" .MaxPoints}}" step="0.5"
+                             value="{{printf "%.2f" .EffectivePts}}" required aria-label="Override points for {{.Title}}">
+                      <button type="submit" class="btn btn-secondary btn-sm">Set</button>
+                    </div>
+                    <input type="text" name="feedback" placeholder="override note (optional)" maxlength="200">
+                  </form>
+                  {{end}}
+                </td>
+              </tr>
+              {{end}}
+              <tr class="total-row"><td><strong>Total</strong></td>
+                <td>{{printf "%.2f" .Eval.TotalScore}}</td><td><strong>{{printf "%.2f" .Eval.EffectiveTotal}}</strong></td><td class="muted small">/ {{printf "%.0f" .Eval.MaxTotal}}</td></tr>
+            </tbody>
+          </table>
+
+          {{if .Eval.Warnings}}
+          <details class="warnings-box"><summary>Validation warnings ({{len .Eval.Warnings}})</summary>
+            <ul class="warning-list">
+              {{range .Eval.Warnings}}<li><span class="badge badge-warning">{{.Level}}</span> {{.Message}}{{if .Criterion}} — {{.Criterion}}{{end}}</li>{{end}}
+            </ul>
+          </details>
+          {{end}}
+
+          <div class="eval-narrative">
+            {{if .Eval.OverallFeedback}}<h4 style="font-size:13px">Overall feedback</h4><p style="font-size:14px">{{.Eval.OverallFeedback}}</p>{{end}}
+            {{if .Eval.Strengths}}<h4 style="font-size:13px">Strengths</h4><ul class="bullets">{{range .Eval.Strengths}}<li>{{.}}</li>{{end}}</ul>{{end}}
+            {{if .Eval.LearningGaps}}<h4 style="font-size:13px">Learning gaps</h4><ul class="bullets">{{range .Eval.LearningGaps}}<li>{{.}}</li>{{end}}</ul>{{end}}
+            {{if .Eval.Suggestions}}<h4 style="font-size:13px">Suggested improvements</h4><ul class="bullets">{{range .Eval.Suggestions}}<li>{{.}}</li>{{end}}</ul>{{end}}
+            {{if .Eval.ConfidenceReason}}<p class="muted small">Confidence rationale: {{.Eval.ConfidenceReason}}</p>{{end}}
+          </div>
+
+          <div class="form-actions">
+            {{if not .Eval.Approved}}
+            <form method="post" action="/faculty/evaluations/{{.Eval.ID}}/approve" class="inline-form">
+              <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+              <button type="submit" class="btn btn-primary">Approve &amp; publish ({{printf "%.2f" .Eval.EffectiveTotal}})</button>
+            </form>
+            {{else}}
+            <form method="post" action="/faculty/evaluations/{{.Eval.ID}}/unpublish" class="inline-form">
+              <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+              <button type="submit" class="btn btn-secondary">Unpublish</button>
+            </form>
+            {{end}}
+          </div>
+          {{else}}
+          {{template "emptystate" (dict "Headline" "No evaluation attempt yet" "Body" "Run the evaluation from the header, or grade this submission manually below.")}}
+          {{end}}
+
+          <hr class="card-sep">
+          <h3 style="font-size:14px">Manual grading</h3>
+          <p class="muted small">Enter faculty scores; totals are computed server-side. Manual attempts are provisional until approved.</p>
+          <form method="post" action="/faculty/submissions/{{.Submission.ID}}/manual" class="formstack manual-form">
+            <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+            {{range .Assignment.Criteria}}
+            <div class="manual-row">
+              <label>{{.Title}} <span class="muted small">/ {{.MaxPoints}}</span></label>
+              <input type="number" name="score_pts_{{.ID}}" min="0" max="{{.MaxPoints}}" step="0.5" placeholder="points">
+              <input type="text" name="score_feedback_{{.ID}}" placeholder="criterion feedback (optional)" maxlength="300">
+            </div>
+            {{end}}
+            <div class="field"><label for="overall">Overall feedback</label>
+              <textarea id="overall" name="overall" rows="3" placeholder="Overall diagnostic feedback..."></textarea></div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-secondary">Create manual attempt</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

@@ -1,0 +1,36 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Evaluations</h1>
+        <p class="muted">The evaluation workflow across all of your courses.</p></div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+      {{if .Rows}}
+      <div class="card">
+        <table class="table">
+          <thead><tr><th>Student</th><th>Assignment</th><th>State</th><th>Method</th><th>Effective</th><th>Updated</th></tr></thead>
+          <tbody>
+            {{range .Rows}}
+            <tr>
+              <td>{{.StudentName}}</td>
+              <td><a href="/faculty/assignments/{{.AssignmentID}}">{{.Assignment}}</a>
+                <div class="muted small">{{.CourseCode}}</div></td>
+              <td><span class="badge {{evalStatusClass .EvalStatus}}">{{evalStatusText .EvalStatus}}</span></td>
+              <td class="muted">{{if .Method}}{{.Method}}{{else}}—{{end}}</td>
+              <td>{{if .Method}}{{printf "%.1f" .Score}}{{else}}—{{end}}</td>
+              <td class="muted small"><a href="/faculty/submissions/{{.SubmissionID}}">Review →</a></td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="card">{{template "emptystate" (dict "Headline" "No submissions yet" "Body" "Evaluations appear here automatically as students submit work." "Href" "/faculty/assignments" "ActionLabel" "View assignments")}}</div>
+      {{end}}
+    </main>
+  </div>
+</div>
+{{end}}

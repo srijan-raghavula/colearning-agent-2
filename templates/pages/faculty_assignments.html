@@ -1,0 +1,39 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Assignments</h1><p class="muted">Every assignment across your courses.</p></div>
+      <div class="filter-tabs">
+        <a class="filter-tab{{if not .Filter}} is-active{{end}}" href="/faculty/assignments">All</a>
+        <a class="filter-tab{{if eq .Filter "draft"}} is-active{{end}}" href="/faculty/assignments?filter=draft">Drafts</a>
+        <a class="filter-tab{{if eq .Filter "published"}} is-active{{end}}" href="/faculty/assignments?filter=published">Published</a>
+      </div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+      {{if .Assignments}}
+      <div class="card">
+        <table class="table">
+          <thead><tr><th>Title</th><th>Course</th><th>Topic</th><th>Due</th><th>Status</th><th>Rubric</th><th>Submissions</th></tr></thead>
+          <tbody>
+            {{range .Assignments}}
+            <tr>
+              <td><a href="/faculty/assignments/{{.ID}}">{{.Title}}</a></td>
+              <td>{{.CourseCode}}</td>
+              <td class="muted">{{.Topic}}</td>
+              <td>{{formatDue .DueDate}}</td>
+              <td>{{if .Published}}<span class="badge badge-success">Published</span>{{else}}<span class="badge badge-warning">Draft</span>{{end}}</td>
+              <td>{{$t := .RubricTotal}}<span class="muted">{{$t}}/100</span></td>
+              <td><a class="btn btn-ghost" href="/faculty/assignments/{{.ID}}/submissions">{{.Submissions}} →</a></td>
+            </tr>{{end}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="card">{{template "emptystate" (dict "Headline" "No assignments" "Body" "Assignments are created inside a course. Open one of your courses to start." "Href" "/faculty/courses" "ActionLabel" "Go to courses")}}</div>
+      {{end}}
+    </main>
+  </div>
+</div>
+{{end}}

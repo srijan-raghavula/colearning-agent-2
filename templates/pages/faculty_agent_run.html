@@ -1,0 +1,98 @@
+{{define "content"}}
+{{if eq .Run.Status "RUNNING"}}<meta http-equiv="refresh" content="3">{{end}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Agent run #{{.Run.ID}} <span class="badge {{agentStatusClass .Run.Status}}">{{.Run.Status}}</span></h1>
+        <p class="muted">{{.Run.Kind}} · iterations {{.Run.Iterations}} / {{.Run.MaxIterations}} · started {{formatDue .Run.CreatedAt}}</p></div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="/faculty/submissions/{{.Sub.ID}}">Grading workspace</a>
+        <a class="btn btn-secondary" href="/faculty/submissions/{{.Sub.ID}}/agent">Run history</a>
+      </div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Goal</h2>
+          <p class="muted small">{{if .Run.Goal}}{{.Run.Goal}}{{else}}Evaluate this submission strictly against the rubric and save a pending evaluation.{{end}}</p>
+        </div></div>
+        {{if .Run.Error}}
+        <div class="notice notice-warning">
+          {{.Run.Error}}
+          <p class="muted small" style="margin:6px 0 0">Escalation: you can re-run the agent (fresh attempt, new trace) or grade manually in the grading workspace above. Nothing was approved automatically.</p>
+        </div>
+        {{end}}
+        {{if .Run.ResultEvaluationID}}
+        <div class="notice notice-success">
+          Saved as evaluation #{{.Run.ResultEvaluationID}} — status NEEDS_REVIEW.
+          Open the <a href="/faculty/submissions/{{.Sub.ID}}">grading workspace</a> to inspect, override or approve. Students see nothing until you approve.
+        </div>
+        {{end}}
+        {{if or (eq .Run.Status "PENDING") (eq .Run.Status "FAILED")}}
+        <form method="post" action="/faculty/agent/runs/{{.Run.ID}}/start" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <button type="submit" class="btn btn-primary">{{icon "sparkles"}} {{if eq .Run.Status "FAILED"}}Run again{{else}}Run now{{end}}</button>
+        </form>
+        {{end}}
+      </section>
+
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Execution trace</h2>
+          <p class="muted small">Decisions, tool calls, inputs, outputs, errors and timestamps as they happened.</p>
+        </div></div>
+        {{if .Events}}
+        <table class="table">
+          <thead><tr><th style="width:52px">#</th><th style="width:150px">Event</th><th>Detail</th></tr></thead>
+          <tbody>
+            {{range .Events}}
+            <tr>
+              <td class="muted small">{{.Seq}}</td>
+              <td><span class="badge {{agentEventClass .Kind}}">{{.Kind}}</span><div class="muted small">{{formatDue .CreatedAt}}</div></td>
+              <td><pre class="answer-text trace-pre">{{.Payload}}</pre></td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        {{else}}
+        {{template "emptystate" (dict "Headline" "No trace yet" "Body" "The trace fills in as soon as the run starts." )}}
+        {{end}}
+      </section>
+
+      {{if .Run.ResultEvaluationID}}
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Reconsider a criterion</h2>
+          <p class="muted small">Starts a fresh agent run that re-evaluates one criterion and saves a NEW pending attempt. The current result stays visible until you approve the new one.</p>
+        </div></div>
+        <form method="post" action="/faculty/agent/runs/{{.Run.ID}}/reconsider" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="formgrid3">
+            <div class="field"><label for="criterion_id">Criterion id</label>
+              <input id="criterion_id" name="criterion_id" type="number" min="1" required></div>
+            <div class="field field-wide2"><label for="note">Faculty note (optional)</label>
+              <input id="note" name="note" maxlength="200" placeholder="e.g. the complexity argument deserves more points"></div>
+          </div>
+          <div class="form-actions"><button type="submit" class="btn btn-secondary">Start reconsideration run</button></div>
+        </form>
+      </section>
+      {{end}}
+
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Ask about this evaluation (read-only)</h2>
+          <p class="muted small">The follow-up run can cite the gathered evidence and rubric context. It cannot change or publish marks.</p>
+        </div></div>
+        <form method="post" action="/faculty/agent/runs/{{.Run.ID}}/message" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="field"><textarea name="question" rows="3" required maxlength="500" placeholder="e.g. Why did the correctness score drop two points?"></textarea></div>
+          <div class="form-actions"><button type="submit" class="btn btn-secondary">Ask the agent</button></div>
+        </form>
+      </section>
+    </main>
+  </div>
+</div>
+{{end}}

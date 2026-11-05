@@ -1,0 +1,50 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Submissions · {{.Assignment.Title}}</h1>
+        <p class="muted">{{.Assignment.CourseCode}} · due {{formatDue .Assignment.DueDate}}</p></div>
+      <a class="btn btn-secondary" href="/faculty/assignments/{{.Assignment.ID}}">Back to assignment</a>
+    </header>
+    <main class="app-content">
+      <div class="metric-row">
+        <div class="metric"><span class="metric-value">{{.Counts.Enrolled}}</span><span class="metric-label">Enrolled</span></div>
+        <div class="metric"><span class="metric-value">{{.Counts.Submitted}}</span><span class="metric-label">Submitted</span></div>
+        <div class="metric"><span class="metric-value">{{.Counts.NotSubmitted}}</span><span class="metric-label">Not submitted</span></div>
+        <div class="metric"><span class="metric-value metric-warn">{{.Counts.Overdue}}</span><span class="metric-label">Overdue</span></div>
+        <div class="metric"><span class="metric-value metric-ok">{{percent .Counts.Completion}}</span><span class="metric-label">Completion</span></div>
+      </div>
+
+      <div class="card">
+        <h2>Student roster</h2>
+        {{if .Roster}}
+        <table class="table">
+          <thead><tr><th>Student</th><th>Email</th><th>Status</th><th>Received</th><th class="th-actions">Actions</th></tr></thead>
+          <tbody>
+            {{range .Roster}}
+            <tr>
+              <td>{{.StudentName}}</td>
+              <td class="muted">{{.Email}}</td>
+              <td>
+                <span class="badge {{statusClass .Status}}">{{statusText .Status}}</span>
+                {{if ne .Status "NOT_SUBMITTED"}}<div class="small" style="margin-top:4px"><span class="badge {{evalStatusClass .EvalStatus}}">{{evalStatusText .EvalStatus}}</span>{{if .Late}} <span class="badge badge-warning">Late</span>{{end}}</div>{{end}}
+              </td>
+              <td>{{if .SubmittedAt}}{{formatDue .SubmittedAt}}{{else}}—{{end}}</td>
+              <td class="th-actions">
+                {{if ne .Status "NOT_SUBMITTED"}}
+                <a class="btn btn-ghost" href="/faculty/submissions/{{.SubmissionID}}">Inspect</a>
+                {{else}}<span class="muted">—</span>{{end}}
+              </td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        {{else}}
+        {{template "emptystate" (dict "Headline" "No students enrolled" "Body" "Enroll students into this course to start collecting submissions.")}}
+        {{end}}
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

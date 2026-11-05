@@ -1,0 +1,19 @@
+# Binaries / build output
+bin/
+*.exe
+
+# Local data: SQLite database and uploads
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Go
+*.test
+*.prof
+
+# Environment
+.env
+
+# OS / editor
+.DS_Store

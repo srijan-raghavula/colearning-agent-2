@@ -1,0 +1,64 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Students</h1><p class="muted">Create student accounts and see who is enrolled in your courses.</p></div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+      <div class="card-grid-wide">
+        <section class="card">
+          <h2>Create a student account</h2>
+          <p class="muted small">The student signs in with these credentials. Only a bcrypt hash of the password is stored.</p>
+          <form method="post" action="/faculty/students" class="formstack">
+            <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+            <div class="formgrid">
+              <div class="field"><label for="name">Full name</label>
+                <input id="name" name="name" required maxlength="80" placeholder="e.g. Arjun Mehta"></div>
+              <div class="field"><label for="email">Email address</label>
+                <input id="email" name="email" type="email" required placeholder="student@example.edu"></div>
+            </div>
+            <div class="formgrid">
+              <div class="field"><label for="password">Initial password</label>
+                <input id="password" name="password" type="text" required minlength="8" autocomplete="new-password">
+                <p class="field-help muted">At least 8 characters, with letters and a number.</p></div>
+              <div class="field"><label for="enroll_course">Optionally enroll into</label>
+                <select id="enroll_course" name="enroll_course">
+                  <option value="">— none —</option>
+                  {{range .Courses}}<option value="{{.ID}}">{{.Code}} · {{.Name}}</option>{{end}}
+                </select></div>
+            </div>
+            <div class="form-actions"><button class="btn btn-primary" type="submit">Create account</button></div>
+          </form>
+        </section>
+
+        <section class="card">
+          <h2>Students in your courses <span class="muted">({{len .Students}})</span></h2>
+          {{if .Students}}
+          <div class="table-scroll">
+          <table class="table">
+            <thead><tr><th>Student</th><th>Email</th><th>Courses</th><th>Avg approved</th><th>Completion</th><th>Attention</th></tr></thead>
+            <tbody>
+              {{range .Students}}
+              <tr>
+                <td><b>{{.Name}}</b></td>
+                <td class="muted">{{.Email}}</td>
+                <td>{{.CourseCount}}</td>
+                <td>{{if .AvgKnown}}<b class="small {{percentClass .AvgPercent}}">{{percent .AvgPercent}}</b>{{else}}<span class="muted small">no approved results</span>{{end}}</td>
+                <td>{{if .CompletionKnown}}<span class="small {{percentClass .Completion}}">{{percent .Completion}}</span>{{else}}<span class="muted small">no published assignments</span>{{end}}</td>
+                <td>{{if .Attention}}<span class="badge badge-warning">{{.Attention}}</span>{{else}}<span class="muted small">—</span>{{end}}</td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+          </div>
+          {{else}}
+          {{template "emptystate" (dict "Headline" "No students yet" "Body" "Student accounts you create or enroll will appear here." )}}
+          {{end}}
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

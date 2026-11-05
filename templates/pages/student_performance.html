@@ -1,0 +1,66 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Performance</h1><p class="muted">Your approved results, topic mastery and learning gaps.</p></div>
+      <a class="btn btn-secondary" href="/student">Back to overview</a>
+    </header>
+    <main class="app-content">
+      <div class="kpi-row" style="max-width:640px">
+        <div class="kpi-card"><span class="kpi-icon kpi-blue">{{icon "activity"}}</span>
+          <span class="kpi-body"><span class="kpi-label">Approved evaluations</span><span class="kpi-value">{{len .Approved}}</span><span class="kpi-sub">Official records only</span></span></div>
+      </div>
+
+      <div class="grid-2">
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Subject performance</h2>
+            <p class="muted small">Comprehension per enrolled subject (approved results).</p>
+          </div></div>
+          {{.SubjectBars}}
+        </section>
+
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Performance trend</h2>
+            <p class="muted small">Approved evaluation scores over time.</p>
+          </div></div>
+          {{.Trend}}
+        </section>
+      </div>
+
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Topic mastery</h2>
+          <p class="muted small">Grouped by subject; below 60% is highlighted for revision.</p>
+        </div></div>
+        {{.TopicBars}}
+      </section>
+
+      <div class="grid-2">
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Learning gaps</h2>
+            <p class="muted small">Approved scores under the 60% threshold.</p>
+          </div></div>
+          <ul class="bullets">
+            {{range .Gaps}}<li>{{.}}</li>{{end}}
+          </ul>
+          {{if .HasTrend}}<p class="muted small">Each gap links to the evaluation feedback on the assignment page — open the related assignment under My Assignments to review the diagnostic comments.</p>{{end}}
+        </section>
+
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Demonstrated strengths</h2>
+            <p class="muted small">Topics where approved results consistently clear 75%.</p>
+          </div></div>
+          <ul class="bullets">
+            {{range .Strengths}}<li>{{.}}</li>{{end}}
+          </ul>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

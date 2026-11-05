@@ -1,0 +1,67 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Agent Evaluation Console</h1>
+        <p class="muted">{{.Assignment.CourseCode}} · {{.Assignment.Title}} · submission #{{.Submission.ID}}</p></div>
+      <div class="header-actions"><a class="btn btn-secondary" href="/faculty/submissions/{{.Submission.ID}}">Grading workspace</a></div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Start a new agent run</h2>
+          <p class="muted small">The agent inspects the assignment and submission with tools, searches for verbatim evidence, scores each criterion, verifies totals and saves a pending evaluation. Faculty approval is still required before students see marks. Uses AI credits — one provider request per turn.</p>
+        </div></div>
+        <form method="post" action="/faculty/submissions/{{.Submission.ID}}/agent/start" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="field"><label for="goal">Optional goal note</label>
+            <input id="goal" name="goal" maxlength="250" placeholder="e.g. Focus on algorithm correctness and complexity analysis"></div>
+          <div class="form-actions"><button type="submit" class="btn btn-primary">{{icon "sparkles"}} Start agent evaluation</button></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Run history <span class="muted">({{len .Runs}})</span></h2>
+          <p class="muted small">Every execution with its decisions, tool calls and results.</p>
+        </div></div>
+        {{if .Runs}}
+        <table class="table">
+          <thead><tr><th>Run</th><th>Kind</th><th>State</th><th>Iterations</th><th>Goal</th><th class="th-actions">Actions</th></tr></thead>
+          <tbody>
+            {{range .Runs}}
+            <tr>
+              <td><a href="/faculty/agent/runs/{{.ID}}">#{{.ID}}</a></td>
+              <td>{{.Kind}}</td>
+              <td><span class="badge {{agentStatusClass .Status}}">{{.Status}}</span>
+                {{if .ResultEvaluationID}}<div class="small" style="margin-top:3px"><span class="badge badge-success">evaluation #{{.ResultEvaluationID}}</span></div>{{end}}</td>
+              <td>{{.Iterations}} / {{.MaxIterations}}</td>
+              <td class="muted small">{{if .Goal}}{{truncate .Goal 80}}{{else}}—{{end}}</td>
+              <td class="th-actions"><a class="btn btn-secondary btn-sm" href="/faculty/agent/runs/{{.ID}}">Open console</a></td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        {{else}}
+        {{template "emptystate" (dict "Headline" "No agent runs yet" "Body" "Start the first agent evaluation above; its execution trace appears here.")}}
+        {{end}}
+      </section>
+
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Ask a follow-up question (read-only)</h2>
+          <p class="muted small">Follow-up runs can inspect the assignment, submission and evidence and answer your question. They cannot change or publish marks.</p>
+        </div></div>
+        <form method="post" action="/faculty/submissions/{{.Submission.ID}}/agent/followup" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="field"><textarea name="question" rows="3" required maxlength="500" placeholder="e.g. Which evidence supports the low complexity score?"></textarea></div>
+          <div class="form-actions"><button type="submit" class="btn btn-secondary">Ask the agent</button></div>
+        </form>
+      </section>
+    </main>
+  </div>
+</div>
+{{end}}

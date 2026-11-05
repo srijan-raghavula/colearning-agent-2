@@ -1,0 +1,119 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>{{greet}}, {{.UserName}}</h1>
+        <p>Your academic progress, submissions and feedback in one place.</p></div>
+      <div class="header-actions"><a class="btn btn-secondary" href="/student/performance">{{icon "bar-chart"}} Performance</a></div>
+    </header>
+
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      <div class="kpi-row">
+        {{range .KPIs}}
+        <div class="kpi-card">
+          <span class="kpi-icon {{.Class}}">{{icon .Icon}}</span>
+          <span class="kpi-body">
+            <span class="kpi-label">{{.Label}}</span>
+            <span class="kpi-value">{{.Value}}</span>
+            <span class="kpi-sub">{{.Sub}}</span>
+          </span>
+        </div>
+        {{end}}
+      </div>
+
+      <!-- Upcoming assignments: the most actionable section -->
+      <section class="card" style="padding:0">
+        <div style="padding:20px 22px 0">
+          <div class="card-title-row"><div>
+            <h2>Upcoming assignments</h2>
+            <p class="muted small">What needs your attention next.</p>
+          </div>
+          <a class="btn btn-secondary btn-sm" href="/student/assignments">All assignments →</a></div>
+        </div>
+        {{if .Upcoming}}
+        <div style="padding:12px 22px 20px">
+          {{range .Upcoming}}
+          <div class="deadline-row">
+            <span class="deadline-when"><b>{{.DueState}}</b>{{formatDue .DueDate}}</span>
+            <span style="flex:1">
+              <b>{{.Title}}</b> <span class="muted small">· {{.CourseCode}}{{if .Topic}} · {{.Topic}}{{end}}</span>
+              {{if .NeedsAttention}}<div class="muted small">overdue — submit as soon as possible</div>
+              {{else if .Late}}<div class="muted small">submitted late — faculty will still review it</div>{{end}}
+            </span>
+            {{if eq .Status "NOT_SUBMITTED"}}
+            <a class="btn btn-primary btn-sm" href="/student/assignments/{{.AssignmentID}}">Open &amp; submit</a>
+            {{else}}
+            <a class="btn btn-secondary btn-sm" href="/student/assignments/{{.AssignmentID}}">View <span class="badge {{statusClass .Status}}">{{statusText .Status}}</span>{{if .Late}}<span class="badge badge-warning">Late</span>{{end}}</a>
+            {{end}}
+          </div>
+          {{end}}
+        </div>
+        {{else}}
+        <div style="padding:6px 22px 20px">{{template "emptystate" (dict "Headline" "Nothing due right now" "Body" "Published assignments will appear here as your faculty publishes them.")}}</div>
+        {{end}}
+      </section>
+
+      <div class="grid-2">
+        <!-- Subject overview -->
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>My subjects</h2>
+            <p class="muted small">Comprehension from approved evaluations only.</p>
+          </div></div>
+          {{if .Subjects}}
+          {{range .Subjects}}
+          <div class="deadline-row">
+            <span class="avatar-sm">{{initials .Name}}</span>
+            <span style="flex:1">
+              <b>{{.Name}}</b> <span class="muted small">· {{.Code}}</span>
+              <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+                <span style="flex:1">{{progress .Comprehension}}</span>
+                <b class="small {{percentClass .Comprehension}}">{{percent .Comprehension}}</b>
+              </div>
+            </span>
+            <a class="btn btn-ghost" href="/student/courses/{{.CourseID}}">Open →</a>
+          </div>
+          {{end}}
+          {{else}}
+          {{template "emptystate" (dict "Headline" "No courses yet" "Body" "Your courses will appear here once you are enrolled.")}}
+          {{end}}
+        </section>
+
+        <!-- Recent evaluations + insights -->
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Recent approved results</h2>
+            <p class="muted small">Official faculty-approved evaluations.</p>
+          </div>
+          <a class="btn btn-secondary btn-sm" href="/student/performance">Charts →</a></div>
+          {{if .Recent}}
+          {{range .Recent}}
+          <div class="deadline-row">
+            <span class="avatar-sm">{{printf "%.0f" .Pct}}</span>
+            <span style="flex:1"><b>{{.Assignment}}</b>{{if .Topic}} <span class="muted small">· {{.Topic}}</span>{{end}}
+              <div class="muted small">{{.Points}} / {{printf "%.0f" .Max}} · approved {{formatDue .ApprovedAt}}</div></span>
+          </div>
+          {{end}}
+          {{else}}
+          {{template "emptystate" (dict "Headline" "No approved results yet" "Body" "Assessment results will appear once submissions have been evaluated and approved.")}}
+          {{end}}
+
+          <hr class="card-sep">
+          <h2 style="font-size:15px">Learning insights</h2>
+          {{if .HasApproved}}
+          {{if .Strongest}}<p class="small" style="margin-top:8px"><span class="badge badge-success">Strength</span> {{.Strongest.Topic}} at <b>{{percent .Strongest.Average}}</b> across {{.Strongest.Evaluations}} evaluated submission(s).</p>
+          <p class="small"><span class="badge badge-warning">Focus</span> {{.Weakest.Topic}} at <b>{{percent .Weakest.Average}}</b> — schedule revision before the next deadline on this topic.</p>
+          {{end}}
+          {{.SubjectBars}}
+          {{else}}
+          {{template "emptystate" (dict "Headline" "Insights build up after approvals" "Body" "Your strongest topics, revision priorities and trend charts are generated from approved evaluations.")}}
+          {{end}}
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

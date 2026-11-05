@@ -1,0 +1,177 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>{{greet}} ,{{.UserName}}</h1><p>Assessment intelligence across your courses · {{.Day}}</p></div>
+      <div class="header-actions">
+        <details class="dropdown">
+          <summary class="btn btn-secondary">Create assignment {{icon "plus"}}</summary>
+          <div class="dropdown-menu">
+            {{range .Courses}}
+            <a class="dropdown-item" href="/faculty/courses/{{.ID}}/assignments/new">{{icon "clipboard-list"}} {{.Code}} · {{.Name}}</a>
+            {{else}}
+            <a class="dropdown-item muted" href="/faculty/courses/new">Create a course first</a>
+            {{end}}
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      <!-- filter row -->
+      <div class="filter-row">
+        <a class="filter-tab{{if eq .CourseID 0}} is-active{{end}}" href="/faculty">All courses</a>
+        {{$cid := .CourseID}}
+        {{range .Courses}}
+        <a class="filter-tab{{if eq $cid .ID}} is-active{{end}}" href="/faculty?course={{.ID}}">{{.Code}}</a>
+        {{end}}
+      </div>
+
+      <!-- KPI row -->
+      <div class="kpi-row">
+        {{range .KPIs}}
+        <div class="kpi-card">
+          <span class="kpi-icon {{.Class}}">{{icon .Icon}}</span>
+          <span class="kpi-body">
+            <span class="kpi-label">{{.Label}}</span>
+            <span class="kpi-value">{{.Value}}</span>
+            <span class="kpi-sub">{{.Sub}}</span>
+          </span>
+        </div>
+        {{end}}
+      </div>
+
+      <!-- Academic performance: 2-column layout -->
+      <div class="grid-2">
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Topic mastery</h2>
+            <p class="muted small">Understand which concepts students have grasped and where learning gaps remain.</p>
+          </div></div>
+          {{if .HasTopics}}
+          {{.TopicBars}}
+          {{else}}
+          {{template "emptystate" (dict "Headline" "No approved evaluations yet" "Body" "Topic mastery appears here once submissions have been evaluated and approved.")}}
+          {{end}}
+        </section>
+
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Assignment completion</h2>
+            <p class="muted small">Submitted vs expected per published assignment.</p>
+          </div></div>
+          {{if .Completion}}
+          <table class="table">
+            <thead><tr><th>Assignment</th><th>Submitted</th><th>Rate</th><th class="th-actions">State</th></tr></thead>
+            <tbody>
+              {{$pend := .Pending}}
+              {{range .Completion}}
+              <tr>
+                <td><a href="/faculty/assignments/{{.AssignmentID}}/submissions">{{.Title}}</a>
+                  <div class="muted small">{{.CourseCode}} · due {{formatDue .DueDate}}</div></td>
+                <td>{{.Submitted}} / {{.Enrolled}}</td>
+                <td>
+                  {{if eq .Enrolled 0}}<span class="muted">N/A — no enrollments</span>
+                  {{else}}
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="flex:1">{{progress .Percent}}</span>
+                    <b class="small {{percentClass .Percent}}">{{percent .Percent}}</b>
+                  </div>
+                  {{end}}
+                </td>
+                <td class="th-actions">
+                  {{if eq .Enrolled 0}}<span class="badge badge-neutral">No students enrolled</span>
+                  {{else if gt .Overdue 0}}<span class="badge badge-danger">{{.Overdue}} overdue</span>
+                  {{else if gt .Missing 0}}<span class="badge badge-warning">{{.Missing}} missing</span>
+                  {{else}}<span class="badge badge-success">Complete</span>{{end}}
+                  {{if index $pend .AssignmentID}}<div class="small" style="margin-top:4px"><span class="badge badge-info">{{index $pend .AssignmentID}} to review</span></div>{{end}}
+                </td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+          {{else}}
+          {{template "emptystate" (dict "Headline" "No published assignments" "Body" "Create and publish an assignment to track submissions here." "Href" "/faculty/courses" "ActionLabel" "Go to courses")}}
+          {{end}}
+        </section>
+      </div>
+
+      <!-- Attention + deadlines -->
+      <div class="grid-2">
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Students requiring attention</h2>
+            <p class="muted small">Explainable rules: approved topic mastery under 60%, or repeated missing work.</p>
+          </div></div>
+          {{if .Attention}}
+          <table class="table">
+            <thead><tr><th>Student</th><th>Course</th><th>Reason</th><th class="th-actions">&nbsp;</th></tr></thead>
+            <tbody>
+              {{range .Attention}}
+              <tr>
+                <td><b>{{.StudentName}}</b><div class="muted small">{{.StudentEmail}}</div></td>
+                <td>{{.CourseCode}}</td>
+                <td>{{.Reason}}<div class="muted small">{{.Detail}}</div></td>
+                <td class="th-actions"><a class="btn btn-ghost" href="/faculty/assignments?filter=published">Assignments →</a></td>
+              </tr>
+              {{end}}
+            </tbody>
+          </table>
+          {{else}}
+          {{template "emptystate" (dict "Headline" "Nobody needs attention right now" "Body" "Approved mastery and submission activity look healthy.")}}
+          {{end}}
+        </section>
+
+        <section class="card">
+          <div class="card-title-row"><div>
+            <h2>Upcoming deadlines</h2>
+            <p class="muted small">Published assignments due within two weeks.</p>
+          </div></div>
+          {{if .Deadlines}}
+          {{range .Deadlines}}
+          <div class="deadline-row">
+            <span class="deadline-when"><b>{{.DueIn}}</b> {{formatDue .DueDate}}</span>
+            <span style="flex:1"><b>{{.Title}}</b> <span class="muted small">· {{.CourseCode}}</span>
+              {{if gt .Outstanding 0}}<div class="muted small">{{.Outstanding}} outstanding submission(s)</div>{{end}}</span>
+            <a class="btn btn-ghost" href="/faculty/assignments/{{.AssignmentID}}/submissions">Monitor →</a>
+          </div>
+          {{end}}
+          {{else}}
+          {{template "emptystate" (dict "Headline" "No deadlines in the next 14 days" "Body" "Assignments with approaching due dates will appear here.")}}
+          {{end}}
+        </section>
+      </div>
+
+      <!-- Recent activity -->
+      <section class="card">
+        <div class="card-title-row"><div>
+          <h2>Recent activity</h2>
+          <p class="muted small">Latest evaluation workflow events.</p>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="/faculty/evaluations">All evaluations →</a></div>
+        {{if .Activity}}
+        <table class="table">
+          <thead><tr><th>Student</th><th>Assignment</th><th>Evaluation state</th><th>Method</th><th class="th-actions">Action</th></tr></thead>
+          <tbody>
+            {{range .Activity}}
+            <tr>
+              <td class="activity-user"><span class="avatar-sm">{{initials .StudentName}}</span>{{.StudentName}}</td>
+              <td>{{.Assignment}}</td>
+              <td><span class="badge {{evalStatusClass .EvalStatus}}">{{evalStatusText .EvalStatus}}</span></td>
+              <td class="muted">{{if .Method}}{{.Method}}{{else}}—{{end}}</td>
+              <td class="th-actions"><a class="btn btn-ghost" href="/faculty/submissions/{{.SubmissionID}}">Review →</a></td>
+            </tr>
+            {{end}}
+          </tbody>
+        </table>
+        {{else}}
+        {{template "emptystate" (dict "Headline" "Nothing submitted yet" "Body" "Student activity will appear here the moment submissions arrive.")}}
+        {{end}}
+      </section>
+    </main>
+  </div>
+</div>
+{{end}}

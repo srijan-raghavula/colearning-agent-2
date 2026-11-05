@@ -1,0 +1,40 @@
+{{define "content"}}
+<div class="login-shell">
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="brand-mark" aria-hidden="true">E</span>
+      <span class="brand-name">EDUCORE</span>
+    </div>
+    <h1>Sign in to your workspace</h1>
+    <p class="login-sub">Academic assessment intelligence for faculty and students.</p>
+
+    {{if .Error}}<div class="notice notice-error" role="alert">{{.Error}}</div>{{end}}
+
+    <form method="post" action="/login" class="login-form">
+      <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+      <div class="field">
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="username"
+               placeholder="you@educore.demo" required autofocus
+               value="{{.Notice}}">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password"
+               autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign in</button>
+    </form>
+
+    <div class="demo-accounts">
+      <h2>Demo accounts</h2>
+      <ul>
+        <li><span class="badge badge-faculty">Faculty</span>
+            <code>faculty@educore.demo</code> / <code>Faculty123!</code></li>
+        <li><span class="badge badge-student">Student</span>
+            <code>student@educore.demo</code> / <code>Student123!</code></li>
+      </ul>
+    </div>
+  </div>
+</div>
+{{end}}

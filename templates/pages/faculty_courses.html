@@ -1,0 +1,34 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>Courses</h1><p class="muted">Subjects you teach and their rosters.</p></div>
+      <a class="btn btn-primary" href="/faculty/courses/new">New course</a>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+      {{if .Courses}}
+      <div class="card-grid">
+        {{range .Courses}}
+        <a class="card course-card" href="/faculty/courses/{{.ID}}">
+          <div class="course-card-top">
+            <span class="badge badge-faculty">{{.Code}}</span>
+            <span class="muted small">Created {{formatDate .CreatedAt}}</span>
+          </div>
+          <h2>{{.Name}}</h2>
+          <p class="muted">{{if .Description}}{{truncate .Description 120}}{{else}}No description yet.{{end}}</p>
+          <div class="course-card-stats">
+            <span><strong>{{.Students}}</strong> students</span>
+            <span><strong>{{.Assignments}}</strong> assignments</span>
+          </div>
+        </a>
+        {{end}}
+      </div>
+      {{else}}
+      <div class="card">{{template "emptystate" (dict "Headline" "No courses yet" "Body" "Create your first subject, then enroll students and add assignments." "Href" "/faculty/courses/new" "ActionLabel" "Create a course")}}</div>
+      {{end}}
+    </main>
+  </div>
+</div>
+{{end}}

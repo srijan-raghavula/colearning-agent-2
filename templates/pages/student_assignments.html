@@ -1,0 +1,44 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>My Assignments</h1><p class="muted">Everything published in your courses.</p></div>
+      <div class="filter-tabs">
+        <a class="filter-tab{{if not .Filter}} is-active{{end}}" href="/student/assignments">All</a>
+        <a class="filter-tab{{if eq .Filter "pending"}} is-active{{end}}" href="/student/assignments?filter=pending">Pending</a>
+        <a class="filter-tab{{if eq .Filter "submitted"}} is-active{{end}}" href="/student/assignments?filter=submitted">Submitted</a>
+        <a class="filter-tab{{if eq .Filter "overdue"}} is-active{{end}}" href="/student/assignments?filter=overdue">Overdue</a>
+      </div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+      {{if .Items}}
+      <div class="card">
+        <table class="table">
+          <thead><tr><th>Assignment</th><th>Course</th><th>Topic</th><th>Due</th><th>Status</th><th>Evaluation</th><th>Marks</th></tr></thead>
+          <tbody>
+            {{range .Items}}
+            {{$a := .A}}
+            <tr>
+              <td><a href="/student/assignments/{{$a.ID}}">{{$a.Title}}</a></td>
+              <td>{{$a.CourseCode}}</td>
+              <td class="muted">{{$a.Topic}}</td>
+              <td>{{formatDue $a.DueDate}}</td>
+              <td>
+                <span class="badge {{statusClass .Status}}">{{statusText .Status}}</span>
+                {{if .Late}}<span class="badge badge-warning">Late</span>{{end}}
+              </td>
+              <td><span class="badge {{evalStatusClass .EvalSt}}">{{evalStatusText .EvalSt}}</span></td>
+              <td class="muted">{{if eq .EvalSt "APPROVED"}}See results on the assignment page{{else}}Provisional marks stay with faculty until approved{{end}}</td>
+            </tr>{{end}}
+          </tbody>
+        </table>
+      </div>
+      {{else}}
+      <div class="card">{{template "emptystate" (dict "Headline" "Nothing here" "Body" "No assignments match this filter right now." "Href" "/student/assignments" "ActionLabel" "Show all")}}</div>
+      {{end}}
+    </main>
+  </div>
+</div>
+{{end}}

@@ -1,0 +1,29 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>New course</h1><p class="muted">Create an academic subject.</p></div>
+      <a class="btn btn-secondary" href="/faculty/courses">Back to courses</a>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+      <div class="card form-card-narrow">
+        <form method="post" action="/faculty/courses" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="field"><label for="name">Course name</label>
+            <input id="name" name="name" required maxlength="120" placeholder="e.g. Data Structures" value="{{.Values.name}}"></div>
+          <div class="field"><label for="code">Course code</label>
+            <input id="code" name="code" required maxlength="20" placeholder="e.g. CS-201" value="{{.Values.code}}">
+            <p class="field-help muted">Must be unique across the institute.</p></div>
+          <div class="field"><label for="description">Description</label>
+            <textarea id="description" name="description" rows="4" placeholder="What this subject covers...">{{.Values.description}}</textarea></div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create course</button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

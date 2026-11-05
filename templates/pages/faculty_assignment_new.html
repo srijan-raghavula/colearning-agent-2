@@ -1,0 +1,44 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>New assignment · {{.Course.Code}}</h1><p class="muted">Draft an assignment and build its rubric. Total must reach exactly 100 before publishing.</p></div>
+      <a class="btn btn-secondary" href="/faculty/courses/{{.Course.ID}}">Back to course</a>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+      <form method="post" action="/faculty/courses/{{.Course.ID}}/assignments" class="assignment-form" id="assignmentForm">
+        <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+        <section class="card">
+          <h2>Assignment details</h2>
+          <div class="field"><label for="title">Title</label>
+            <input id="title" name="title" required maxlength="150" placeholder="e.g. Graph Traversal"></div>
+          <div class="field"><label for="description">Instructions</label>
+            <textarea id="description" name="description" rows="6" placeholder="What should students do? Include any constraints..."></textarea></div>
+          <div class="formgrid3">
+            <div class="field"><label for="topic">Topic</label>
+              <input id="topic" name="topic" placeholder="e.g. Graphs"></div>
+            <div class="field"><label for="due_date">Due date</label>
+              <input id="due_date" name="due_date" type="datetime-local" required></div>
+            <div class="field"><label for="total_marks">Total marks</label>
+              <input id="total_marks" name="total_marks" type="number" min="1" max="1000" value="100"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <h2>Grading rubric</h2>
+          <p class="muted small">Each criterion needs a name, a description and a positive maximum score. The rubric must total exactly 100 points to publish.</p>
+          <div class="rubric-total muted" id="rubricTotal">Total rubric points: <strong id="rubricTotalValue">0</strong> / 100</div>
+          <div id="criterionList"></div>
+          <button type="button" class="btn btn-secondary" id="addCriterion">+ Add criterion</button>
+          <input type="hidden" name="criteria_order" id="criteriaOrder" value="">
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create draft assignment</button>
+          </div>
+        </section>
+      </form>
+    </main>
+  </div>
+</div>
+{{end}}

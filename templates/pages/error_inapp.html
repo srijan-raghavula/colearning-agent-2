@@ -1,0 +1,13 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header"><div class="header-title"><h1>Not available</h1></div></header>
+    <main class="app-content">
+      <section class="card">
+        {{template "emptystate" (dict "Headline" .Headline "Body" .Body)}}
+      </section>
+    </main>
+  </div>
+</div>
+{{end}}

@@ -1,0 +1,34 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>{{.Course.Code}} · {{.Course.Name}}</h1>
+        <p class="muted">{{.Course.FacultyName}}</p></div>
+      <a class="btn btn-secondary" href="/student/courses">Back to courses</a>
+    </header>
+    <main class="app-content">
+      <p class="muted">{{if .Course.Description}}{{.Course.Description}}{{else}}No description.{{end}}</p>
+      <div class="card">
+        <h2>Published assignments</h2>
+        {{if .Assignments}}
+        <table class="table">
+          <thead><tr><th>Title</th><th>Topic</th><th>Due</th><th>Status</th></tr></thead>
+          <tbody>
+            {{range .Assignments}}
+            <tr>
+              <td><a href="/student/assignments/{{.ID}}">{{.Title}}</a></td>
+              <td class="muted">{{.Topic}}</td>
+              <td>{{formatDue .DueDate}}</td>
+              <td><span class="badge {{statusClass .Status}}">{{statusText .Status}}</span></td>
+            </tr>{{end}}
+          </tbody>
+        </table>
+        {{else}}
+        {{template "emptystate" (dict "Headline" "No assignments yet" "Body" "Your faculty member has not published assignments for this course.")}}
+        {{end}}
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

@@ -1,0 +1,120 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title"><h1>{{.Assignment.Title}}</h1>
+        <p class="muted">{{.Assignment.CourseCode}} · topic: {{.Assignment.Topic}} · due {{formatDue .Assignment.DueDate}} · {{.Assignment.TotalMarks}} marks</p></div>
+      <a class="btn btn-secondary" href="/student/assignments">Back</a>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      <!-- Evaluation status line (submitted / evaluating / awaiting review / published / failed) -->
+      {{if .Submission}}
+      {{if eq .Submission.EvalStatus "PENDING"}}<div class="notice notice-info">Your submission is being evaluated. Marks appear here once your faculty member approves them.</div>
+      {{else if eq .Submission.EvalStatus "RUNNING"}}<div class="notice notice-info">Your submission is being evaluated. Marks appear here once your faculty member approves them.</div>
+      {{else if eq .Submission.EvalStatus "NEEDS_REVIEW"}}<div class="notice notice-info">Your submission has been evaluated and is awaiting faculty review. Official marks appear once approved.</div>
+      {{else if eq .Submission.EvalStatus "FAILED"}}<div class="notice notice-error">The automatic evaluation could not be completed. Your submission is safe — your faculty member will review or grade it manually.</div>
+      {{end}}{{end}}
+
+      {{if .Eval}}
+      <section class="card results-panel">
+        <div class="section-head">
+          <h2>Published results</h2>
+          <span class="badge badge-success">Approved</span>
+        </div>
+        <p class="muted small">Official results published by your faculty member{{if .Eval.ApprovedAt}} on {{formatDue .Eval.ApprovedAt}}{{end}}. These marks are final.</p>
+        <table class="table">
+          <thead><tr><th>Criterion</th><th>Awarded</th><th>Max</th></tr></thead>
+          <tbody>
+            {{range .Eval.Criteria}}
+            <tr>
+              <td><strong>{{.Title}}</strong>
+                {{if .Override}}<div class="muted small">adjusted by {{.Override.FacultyName}}{{if .Override.Feedback}} — “{{.Override.Feedback}}”{{end}}</div>{{end}}
+                {{range .Evidence}}<div class="muted small"><q>{{.Quote}}</q></div>{{end}}</td>
+              <td><strong>{{fmtPoints .EffectivePts}}</strong></td>
+              <td>{{printf "%.0f" .MaxPoints}}</td>
+            </tr>
+            {{end}}
+            <tr class="total-row"><td><strong>Total</strong></td><td><strong>{{printf "%.2f" .Eval.EffectiveTotal}}</strong></td><td>{{printf "%.0f" .Eval.MaxTotal}}</td></tr>
+          </tbody>
+        </table>
+
+        {{if .Eval.OverallFeedback}}<h4 style="font-size:13px;margin-top:14px">Feedback</h4><p style="font-size:14px">{{.Eval.OverallFeedback}}</p>{{end}}
+        {{if .Eval.Strengths}}<h4 style="font-size:13px">Strengths</h4><ul class="bullets">{{range .Eval.Strengths}}<li>{{.}}</li>{{end}}</ul>{{end}}
+        {{if .Eval.LearningGaps}}<h4 style="font-size:13px">Learning gaps</h4><ul class="bullets">{{range .Eval.LearningGaps}}<li>{{.}}</li>{{end}}</ul>{{end}}
+        {{if .Eval.Suggestions}}<h4 style="font-size:13px">Suggested next steps</h4><ul class="bullets">{{range .Eval.Suggestions}}<li>{{.}}</li>{{end}}</ul>{{end}}
+      </section>
+      {{else}}
+      {{/* No published results yet — explain why, without exposing provisional data. */}}
+      {{end}}
+
+      {{if .DuePast}}
+      <div class="notice {{if .Submission}}notice-info{{else}}notice-error{{end}}">
+        {{if .Submission}}The deadline has passed{{else}}This assignment is past its deadline{{end}}.
+        {{if .LateSubmission}}Your submission was recorded as late.{{else}}Late submissions are still accepted and clearly flagged.{{end}}
+      </div>
+      {{end}}
+
+      <div class="card-grid">
+        <section class="card">
+          <h2>Instructions</h2>
+          <div class="assignment-body">{{if .Assignment.Description}}{{.Assignment.Description}}{{else}}No additional instructions.{{end}}</div>
+          <hr class="card-sep">
+          <h3 style="font-size:14px">Grading rubric</h3>
+          {{if .Assignment.Criteria}}
+          <table class="table rubric-table">
+            <thead><tr><th>Criterion</th><th>Max points</th></tr></thead>
+            <tbody>
+              {{range .Assignment.Criteria}}
+              <tr><td><strong>{{.Title}}</strong><div class="muted small">{{.Description}}</div></td><td>{{.MaxPoints}}</td></tr>
+              {{end}}
+              <tr class="total-row"><td><strong>Total</strong></td><td><strong>{{.Assignment.RubricTotal}}</strong></td></tr>
+            </tbody>
+          </table>
+          {{else}}<p class="muted">No rubric published yet.</p>{{end}}
+        </section>
+
+        <section class="card" id="submission">
+          <div class="section-head">
+            <h2>Your submission</h2>
+            <span class="badge {{.StatusClass}}">{{.StatusLabel}}</span>
+            {{if .LateSubmission}}<span class="badge badge-warning">Late</span>{{end}}
+          </div>
+          {{if .Submission}}
+          <p class="muted small">Last received {{formatDue .Submission.SubmittedAt}}. You can replace your answer at any time; the latest version is kept.</p>
+          {{if .Submission.Content}}
+          <div class="current-submission">
+            <h4 style="font-size:13px">Current answer text</h4>
+            <pre class="answer-text">{{.Submission.Content}}</pre>
+          </div>
+          {{end}}
+          {{if .Submission.Filename}}
+          <p>Attached: <code>{{.Submission.Filename}}</code>
+            <a class="btn btn-ghost" href="/student/assignments/{{.Assignment.ID}}/download">Download</a></p>
+          {{end}}
+          <hr class="card-sep">
+          {{end}}
+
+          <form method="post" action="/student/assignments/{{.Assignment.ID}}/submit" enctype="multipart/form-data" class="formstack">
+            <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+            <div class="field">
+              <label for="content">Answer text</label>
+              <textarea id="content" name="content" rows="8" placeholder="Write or paste your answer...">{{if .Submission}}{{.Submission.Content}}{{end}}</textarea>
+            </div>
+            <div class="field">
+              <label for="document">Attach a document (PDF, DOCX, TXT — max 10 MB)</label>
+              <input id="document" name="document" type="file" accept=".pdf,.docx,.txt">
+              <p class="field-help muted">Optional: submit text, a document, or both.</p>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary">{{if .Submission}}Update submission{{else}}Submit answer{{end}}</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+</div>
+{{end}}

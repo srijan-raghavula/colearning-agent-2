@@ -1,0 +1,104 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title">
+        <h1>{{.Assignment.Title}}</h1>
+        <p class="muted">{{.Assignment.CourseCode}} · {{.Assignment.CourseName}}</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="/faculty/assignments/{{.Assignment.ID}}/submissions">Submissions</a>
+        {{if .Assignment.Published}}
+        <span class="badge badge-success">Published</span>
+        {{else}}
+        <form method="post" action="/faculty/assignments/{{.Assignment.ID}}/publish" class="inline-form">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <button type="submit" class="btn btn-primary">Publish</button>
+        </form>
+        {{end}}
+      </div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      {{if .Assignment.Published}}
+      <div class="notice notice-info">
+        This assignment is published and visible to enrolled students. Its
+        instructions and rubric are locked. Students can submit until the deadline
+        ({{formatDue .Assignment.DueDate}}); late submissions are flagged.
+      </div>
+      {{end}}
+
+      <div class="metric-row">
+        <div class="metric"><span class="metric-value">{{.Counts.Enrolled}}</span><span class="metric-label">Enrolled</span></div>
+        <div class="metric"><span class="metric-value">{{.Counts.Submitted}}</span><span class="metric-label">Submitted</span></div>
+        <div class="metric"><span class="metric-value">{{.Counts.NotSubmitted}}</span><span class="metric-label">Not submitted</span></div>
+        <div class="metric"><span class="metric-value metric-warn">{{.Counts.Overdue}}</span><span class="metric-label">Overdue</span></div>
+        <div class="metric"><span class="metric-value">{{percent .Counts.Completion}}</span><span class="metric-label">Completion</span></div>
+      </div>
+
+      {{if not .Assignment.Published}}
+      <section class="card">
+        <h2>Assignment details</h2>
+        <form method="post" action="/faculty/assignments/{{.Assignment.ID}}" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="field"><label for="title">Title</label>
+            <input id="title" name="title" required maxlength="150" value="{{.Assignment.Title}}"></div>
+          <div class="field"><label for="description">Instructions</label>
+            <textarea id="description" name="description" rows="6">{{.Assignment.Description}}</textarea></div>
+          <div class="formgrid3">
+            <div class="field"><label for="topic">Topic</label>
+              <input id="topic" name="topic" value="{{.Assignment.Topic}}"></div>
+            <div class="field"><label for="due_date">Due date</label>
+              <input id="due_date" name="due_date" type="datetime-local" required value="{{toInput .Assignment.DueDate}}"></div>
+            <div class="field"><label for="total_marks">Total marks</label>
+              <input id="total_marks" name="total_marks" type="number" min="1" max="1000" value="{{.Assignment.TotalMarks}}"></div>
+          </div>
+          <div class="form-actions"><button class="btn btn-primary" type="submit">Save changes</button></div>
+        </form>
+      </section>
+
+      <section class="card">
+        <div class="section-head">
+          <h2>Grading rubric</h2>
+          <div class="rubric-total muted {{if eq .Assignment.RubricTotal 100}}is-complete{{end}}{{if gt .Assignment.RubricTotal 100}}is-error{{end}}">
+            Total rubric points: <strong>{{.Assignment.RubricTotal}}</strong> / 100
+            {{if ne .Assignment.RubricTotal 100}}
+            <span class="muted small">— publication needs exactly 100</span>
+            {{end}}
+          </div>
+        </div>
+        <form method="post" action="/faculty/assignments/{{.Assignment.ID}}/rubric" id="rubricEditForm">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <input type="hidden" name="criteria_order" id="criteriaOrder" value="{{range .Assignment.Criteria}}{{.ID}},{{end}}">
+          <div id="criterionList" class="criterion-editor">
+            {{range .Assignment.Criteria}}
+            <div class="criterion-row" data-index="{{.ID}}">
+              <div class="criterion-grid">
+                <div class="field"><label>Name</label><input name="crit_title_{{.ID}}" value="{{.Title}}" required maxlength="80"></div>
+                <div class="field"><label>Maximum points</label><input class="crit-points" name="crit_points_{{.ID}}" type="number" min="1" max="100" value="{{.MaxPoints}}" required></div>
+                <div class="field"><label>Topic</label><input name="crit_topic_{{.ID}}" value="{{.Topic}}" maxlength="60"></div>
+                <div class="field field-wide"><label>Description</label><input name="crit_description_{{.ID}}" value="{{.Description}}" required maxlength="300"></div>
+                <div class="field field-wide"><label>Keywords</label><input name="crit_keywords_{{.ID}}" value="{{.Keywords}}" maxlength="200"></div>
+              </div>
+              <button type="button" class="btn btn-ghost criterion-remove" data-id="{{.ID}}">Remove</button>
+            </div>
+            {{end}}
+          </div>
+          <div class="form-actions form-actions-split">
+            <button type="button" class="btn btn-secondary" id="addCriterion">+ Add criterion</button>
+            <button type="submit" class="btn btn-primary">Save rubric</button>
+          </div>
+        </form>
+        <form method="post" action="/faculty/assignments/{{.Assignment.ID}}/delete" class="danger-zone">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <button type="submit" class="btn btn-ghost alignleft">Delete draft</button>
+        </form>
+      </section>
+
+      {{end}}
+    </main>
+  </div>
+</div>
+{{end}}
