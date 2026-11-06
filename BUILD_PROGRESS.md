@@ -194,7 +194,7 @@ go build -o bin/educore .
 go test ./...
 ```
 
-Optional `.env`: `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` to enable real AI evaluation; without them the labeled DEMO mode runs. AI mode expects the OpenAI-compatible chat-completions path (`<AI_BASE_URL>/chat/completions`).
+Optional `.env`: `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` to enable real AI evaluation, the chapter tutor, and quizzes; environment variables override `.env`. Without them the labeled DEMO evaluation mode runs and tutor/quizzes remain disabled. AI mode expects the OpenAI-compatible chat-completions path (`<AI_BASE_URL>/chat/completions`).
 
 ## Phase 5 correction pass (pre-Phase 6) — issues, root causes, fixes, tests
 

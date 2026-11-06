@@ -206,6 +206,8 @@
     quizForm.hidden = true;
     quizResult.hidden = true;
     retryQuiz.hidden = true;
+    quizID = "";
+    quizData = [];
     postJSON("quiz").then(function (result) {
       quizID = result.quiz_id;
       quizData = result.questions;
@@ -241,6 +243,18 @@
     });
   }
 
+  function retryCurrentQuiz() {
+    if (!quizID || !quizData.length) {
+      loadQuiz();
+      return;
+    }
+    quizForm.reset();
+    quizForm.hidden = false;
+    quizResult.hidden = true;
+    retryQuiz.hidden = true;
+    quizStatus.hidden = true;
+  }
+
   function submitQuiz(event) {
     event.preventDefault();
     var answers = [];
@@ -267,6 +281,12 @@
       score.className = "quiz-score";
       score.textContent = "You scored " + result.score + " out of " + result.total;
       quizResult.appendChild(score);
+      if (result.total > 0 && result.score === result.total) {
+        var congratulations = document.createElement("p");
+        congratulations.className = "quiz-congratulations";
+        congratulations.textContent = "Congratulations! You got a perfect score!";
+        quizResult.appendChild(congratulations);
+      }
       result.results.forEach(function (item, index) {
         var feedback = document.createElement("div");
         feedback.className = "quiz-feedback " + (item.correct ? "is-correct" : "is-incorrect");
@@ -279,8 +299,7 @@
         quizResult.appendChild(feedback);
       });
       quizResult.hidden = false;
-      retryQuiz.textContent = "Try another quiz";
-      retryQuiz.hidden = false;
+      retryQuiz.hidden = result.total > 0 && result.score === result.total;
     }).catch(function (error) {
       quizStatus.className = "quiz-status is-error";
       quizStatus.textContent = error.message;
@@ -291,7 +310,7 @@
   }
 
   retryLesson.addEventListener("click", loadLesson);
-  retryQuiz.addEventListener("click", loadQuiz);
+  retryQuiz.addEventListener("click", retryCurrentQuiz);
   quizForm.addEventListener("submit", submitQuiz);
   if (root.dataset.aiReady === "true") {
     loadLesson();

@@ -579,6 +579,7 @@ input:focus, select:focus, textarea:focus {
 .quiz-option input { margin-top: 3px; accent-color: var(--primary); }
 .quiz-submit-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-top: 13px; }
 .quiz-score { padding: 15px; border-radius: 10px; color: #174D47; background: var(--success-soft); font-weight: 700; font-size: 18px; text-align: center; margin: 15px 0; }
+.quiz-congratulations { color: #175C54; font-weight: 650; text-align: center; }
 .quiz-feedback { padding: 11px 12px; margin: 8px 0; border-radius: 8px; font-size: 12px; }
 .quiz-feedback p { margin: 4px 0 0; }
 .quiz-feedback.is-correct { color: #175C54; background: var(--success-soft); }

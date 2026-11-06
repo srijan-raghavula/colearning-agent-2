@@ -283,6 +283,11 @@ func TestLearningChapterQuizScoresAnswersOnServer(t *testing.T) {
 		!strings.Contains(response.Body, `"total":3`) || !strings.Contains(response.Body, `"correct":false`) {
 		t.Fatalf("quiz scoring status=%d body=%s", response.Code, response.Body)
 	}
+	response = postTutorJSON(t, student, pageURL+"/quiz/submit", csrf,
+		`{"quiz_id":"`+generated.QuizID+`","answers":[0,0,0]}`)
+	if response.Code != http.StatusOK || !strings.Contains(response.Body, `"score":3`) {
+		t.Fatalf("repeated quiz attempt status=%d body=%s", response.Code, response.Body)
+	}
 }
 
 func postTutorJSON(t *testing.T, client *http.Client, target, csrf, body string) *httpResponse {

@@ -20,9 +20,11 @@ go build -o bin/educore .
 go test ./...            # full suite
 ```
 
-Configuration via environment (see `.env.example`): `APP_ADDR`,
-`APP_DB_PATH`, `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`. Without AI credentials
-the engine runs in clearly-labeled DEMO evaluation mode.
+Configuration via environment or a local `.env` file (see `.env.example`):
+`APP_ADDR`, `APP_DB_PATH`, `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL`. Environment
+variables override `.env`. Set all three AI provider values to enable AI
+evaluation, the AI tutor, and chapter quizzes. Without them the evaluation
+engine runs in clearly-labeled DEMO mode and the tutor/quizzes remain disabled.
 
 ### Demo credentials
 
