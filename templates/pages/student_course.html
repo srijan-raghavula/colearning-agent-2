@@ -5,10 +5,39 @@
     <header class="app-header">
       <div class="header-title"><h1>{{.Course.Code}} · {{.Course.Name}}</h1>
         <p class="muted">{{.Course.FacultyName}}</p></div>
-      <a class="btn btn-secondary" href="/student/courses">Back to courses</a>
+      <div class="header-actions">
+        <a class="btn btn-primary" href="/student/learning-studio">✦ Learning Studio</a>
+        <a class="btn btn-secondary" href="/student/courses">Back to courses</a>
+      </div>
     </header>
     <main class="app-content">
       <p class="muted">{{if .Course.Description}}{{.Course.Description}}{{else}}No description.{{end}}</p>
+      <section class="card">
+        <div class="card-title-row">
+          <div>
+            <h2>Course chapters</h2>
+            <p class="muted small">Published learning material for this course.</p>
+          </div>
+          <span class="badge badge-info">{{len .Chapters}} published</span>
+        </div>
+        {{if .Chapters}}
+        <div class="chapter-list">
+          {{range .Chapters}}
+          <article class="chapter-row">
+            <div class="chapter-order" aria-label="Chapter order">{{.Position}}</div>
+            <div class="chapter-summary">
+              <div class="chapter-title-row"><h3>{{.Title}}</h3><span class="badge badge-success">Published</span></div>
+              {{if .Description}}<p class="muted small">{{.Description}}</p>{{else}}<p class="muted small">Open this chapter to view its learning content.</p>{{end}}
+            </div>
+            <a class="btn btn-secondary btn-sm" href="/student/courses/{{$.Course.ID}}/chapters/{{.ID}}">Open chapter</a>
+          </article>
+          {{end}}
+        </div>
+        {{else}}
+        {{template "emptystate" (dict "Headline" "No chapters available" "Body" "Your faculty member has not published any learning chapters for this course yet.")}}
+        {{end}}
+      </section>
+
       <div class="card">
         <h2>Published assignments</h2>
         {{if .Assignments}}

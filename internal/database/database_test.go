@@ -22,7 +22,8 @@ func TestOpenFreshDatabase(t *testing.T) {
 	}
 	// Sanity: core tables exist.
 	for _, table := range []string{"users", "courses", "enrollments", "assignments",
-		"rubric_criteria", "submissions", "evaluations", "criterion_results", "sessions"} {
+		"rubric_criteria", "submissions", "evaluations", "criterion_results", "sessions",
+		"course_chapters"} {
 		if _, err := db.Exec("SELECT 1 FROM " + table); err != nil {
 			t.Fatalf("table %s missing: %v", table, err)
 		}
@@ -51,6 +52,45 @@ func TestMigrationsIdempotent(t *testing.T) {
 	// A third explicit Migrate must be a no-op.
 	if err := Migrate(db2); err != nil {
 		t.Fatalf("repeat Migrate: %v", err)
+	}
+}
+
+func TestChapterMigrationPreservesExistingCourseData(t *testing.T) {
+	path := tempPath(t)
+	db, err := Open(path)
+	if err != nil {
+		t.Fatalf("first open: %v", err)
+	}
+	if _, err := db.Exec(`INSERT INTO users (email, name, password_hash, role)
+		VALUES ('migration-faculty@example.test', 'Faculty', 'hash', 'FACULTY')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db.Exec(`INSERT INTO courses (faculty_id, name, code, description)
+		VALUES (1, 'Existing course', 'EXISTING', 'Existing description')`); err != nil {
+		t.Fatal(err)
+	}
+	if err := Close(db); err != nil {
+		t.Fatal(err)
+	}
+
+	db, err = Open(path)
+	if err != nil {
+		t.Fatalf("reopen after additive migration: %v", err)
+	}
+	defer Close(db)
+	var name, description string
+	if err := db.QueryRow(`SELECT name, description FROM courses WHERE code = 'EXISTING'`).Scan(&name, &description); err != nil {
+		t.Fatalf("existing course unavailable after migration: %v", err)
+	}
+	if name != "Existing course" || description != "Existing description" {
+		t.Fatalf("existing data changed: name=%q description=%q", name, description)
+	}
+	var migrations int
+	if err := db.QueryRow(`SELECT COUNT(*) FROM schema_migrations WHERE name = '005_course_chapters.sql'`).Scan(&migrations); err != nil {
+		t.Fatal(err)
+	}
+	if migrations != 1 {
+		t.Fatalf("chapter migration recorded %d times", migrations)
 	}
 }
 

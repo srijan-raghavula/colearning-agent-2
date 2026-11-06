@@ -18,6 +18,10 @@ func (d *Deps) studentNav(r *http.Request) []NavEntry {
 	p := r.URL.Path
 	var active string
 	switch {
+	case strings.HasPrefix(p, "/student/courses/") && strings.Contains(p, "/chapters/"):
+		active = "/student/learning-studio"
+	case strings.HasPrefix(p, "/student/learning-studio"):
+		active = "/student/learning-studio"
 	case strings.HasPrefix(p, "/student/courses"):
 		active = "/student/courses"
 	case strings.HasPrefix(p, "/student/assignments"):
@@ -31,6 +35,7 @@ func (d *Deps) studentNav(r *http.Request) []NavEntry {
 		{"/student", "Overview", "layout"},
 		{"/student/courses", "My Courses", "book-open"},
 		{"/student/assignments", "My Assignments", "clipboard-list"},
+		{"/student/learning-studio", "Learning Studio", "book-open"},
 		{"/student/performance", "Performance", "bar-chart"},
 	}
 	out := make([]NavEntry, 0, len(entries))
@@ -112,6 +117,11 @@ func (d *Deps) StudentCourseDetail(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
+	chapters, err := d.Store.PublishedChaptersForStudent(id, sid)
+	if err != nil {
+		http.Error(w, "Could not load published course chapters.", http.StatusInternalServerError)
+		return
+	}
 	rows, qerr := d.Store.DB.Query(`SELECT a.id, a.title, a.topic, a.due_date, a.total_marks,
 			COALESCE(s.status,''), COALESCE(s.submitted_at,'')
 		FROM assignments a
@@ -156,7 +166,52 @@ func (d *Deps) StudentCourseDetail(w http.ResponseWriter, r *http.Request) {
 		PageData
 		Course      *store.Course
 		Assignments []courseAssign
-	}{p, course, items}, http.StatusOK)
+		Chapters    []*store.Chapter
+	}{p, course, items, chapters}, http.StatusOK)
+}
+
+// StudentChapterDetail displays one published chapter for an enrolled student.
+func (d *Deps) StudentChapterDetail(w http.ResponseWriter, r *http.Request) {
+	sid, _ := d.sp(r)
+	courseID, err := idParam(r, "id")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	chapterID, err := idParam(r, "chapterID")
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	chapter, err := d.Store.PublishedChapterForStudent(courseID, chapterID, sid)
+	if err != nil {
+		if err == store.ErrNotFound {
+			http.NotFound(w, r)
+			return
+		}
+		http.Error(w, "Could not load the course chapter.", http.StatusInternalServerError)
+		return
+	}
+	course, err := d.Store.CourseByID(courseID)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	chapters, err := d.Store.PublishedChaptersForStudent(courseID, sid)
+	if err != nil {
+		http.Error(w, "Could not load published course chapters.", http.StatusInternalServerError)
+		return
+	}
+	p := d.pageFrom(r)
+	p.Title = chapter.Title + " · " + course.Code + " · EDUCORE"
+	p.Nav = d.studentNav(r)
+	d.render(w, r, "student_chapter.html", struct {
+		PageData
+		Course   *store.Course
+		Chapter  *store.Chapter
+		Chapters []*store.Chapter
+		AIReady  bool
+	}{p, course, chapter, chapters, d.AIOn && d.LearningAI != nil}, http.StatusOK)
 }
 
 // StatusLabel and StatusClass format submission states for templates.

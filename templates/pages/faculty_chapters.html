@@ -1,0 +1,121 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title">
+        <h1>{{if .Chapter}}Edit chapter{{else if .ShowList}}Course chapters{{else}}New chapter{{end}}</h1>
+        <p class="muted">{{.Course.Code}} · {{.Course.Name}}</p>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="/faculty/courses/{{.Course.ID}}">Back to course</a>
+        {{if not .IsNew}}
+        <a class="btn btn-primary" href="/faculty/courses/{{.Course.ID}}/chapters/new">New chapter</a>
+        {{end}}
+      </div>
+    </header>
+    <main class="app-content">
+      {{template "flashblock" (flashctx .)}}
+
+      {{if .ShowList}}
+      <section class="card">
+        <div class="card-title-row">
+          <div>
+            <h2>Learning chapters</h2>
+            <p class="muted small">Order each chapter, keep work in draft, and publish when the content is ready for students.</p>
+          </div>
+          <span class="badge badge-info">{{len .Chapters}} total</span>
+        </div>
+        {{if .Chapters}}
+        <div class="chapter-list">
+          {{range .Chapters}}
+          <article class="chapter-row">
+            <div class="chapter-order" aria-label="Chapter order">{{.Position}}</div>
+            <div class="chapter-summary">
+              <div class="chapter-title-row">
+                <h3>{{.Title}}</h3>
+                {{if .Published}}<span class="badge badge-success">Published</span>{{else}}<span class="badge badge-warning">Draft</span>{{end}}
+              </div>
+              {{if .Description}}<p class="muted small">{{.Description}}</p>{{else}}<p class="muted small">No description yet.</p>{{end}}
+            </div>
+            <a class="btn btn-secondary btn-sm" href="/faculty/courses/{{$.Course.ID}}/chapters/{{.ID}}">Edit</a>
+          </article>
+          {{end}}
+        </div>
+        {{else}}
+        {{template "emptystate" (dict "Headline" "No chapters yet" "Body" "Add the first chapter to start building course learning content.")}}
+        {{end}}
+      </section>
+      {{else if .Chapter}}
+      <section class="card chapter-editor">
+        <div class="card-title-row">
+          <div>
+            <h2>Chapter details</h2>
+            <p class="muted small">Learning content supports Markdown and plain text.</p>
+          </div>
+          {{if .Chapter.Published}}<span class="badge badge-success">Published</span>{{else}}<span class="badge badge-warning">Draft</span>{{end}}
+        </div>
+        <form method="post" action="/faculty/courses/{{.Course.ID}}/chapters/{{.Chapter.ID}}" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="formgrid chapter-form-grid">
+            <div class="field chapter-title-field"><label for="title">Chapter title</label>
+              <textarea id="title" name="title" required maxlength="120" rows="2">{{.Chapter.Title}}</textarea></div>
+            <div class="field"><label for="position">Chapter order</label>
+              <input id="position" name="position" type="number" min="1" max="10000" required value="{{.Chapter.Position}}">
+              <p class="field-help muted">Lower numbers appear first.</p></div>
+          </div>
+          <div class="field"><label for="description">Description <span class="muted">(optional)</span></label>
+            <textarea id="description" name="description" rows="2" maxlength="1000">{{.Chapter.Description}}</textarea></div>
+          <div class="field"><label for="content">Learning content</label>
+            <textarea id="content" name="content" rows="18" maxlength="200000" placeholder="Write the chapter lesson using Markdown or plain text.">{{.Chapter.Content}}</textarea>
+            <p class="field-help muted">Content is stored as text. It is not rendered as trusted HTML.</p></div>
+          <div class="form-actions form-actions-split">
+            <a class="btn btn-ghost" href="/faculty/courses/{{.Course.ID}}/chapters">Cancel</a>
+            <div class="header-actions">
+              <button type="submit" class="btn btn-secondary" name="intent" value="draft">Save as draft</button>
+              <button type="submit" class="btn btn-primary" name="intent" value="publish">Save &amp; publish</button>
+            </div>
+          </div>
+        </form>
+        <form method="post" action="/faculty/courses/{{.Course.ID}}/chapters/{{.Chapter.ID}}/delete" class="danger-zone" data-confirm="Delete this chapter? Students will no longer be able to access it.">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <button type="submit" class="btn btn-ghost btn-danger-ghost">Delete chapter</button>
+        </form>
+      </section>
+      {{else}}
+      <section class="card chapter-editor">
+        <div class="card-title-row">
+          <div>
+            <h2>New chapter</h2>
+            <p class="muted small">Learning content supports Markdown and plain text.</p>
+          </div>
+          <span class="badge badge-warning">Draft until published</span>
+        </div>
+        <form method="post" action="/faculty/courses/{{.Course.ID}}/chapters" class="formstack">
+          <input type="hidden" name="_csrf" value="{{.CSRFValue}}">
+          <div class="formgrid chapter-form-grid">
+            <div class="field chapter-title-field"><label for="title">Chapter title</label>
+              <textarea id="title" name="title" required maxlength="120" rows="2" placeholder="e.g. Graph Traversal"></textarea></div>
+            <div class="field"><label for="position">Chapter order</label>
+              <input id="position" name="position" type="number" min="1" max="10000" required value="{{add (len .Chapters) 1}}">
+              <p class="field-help muted">Lower numbers appear first.</p></div>
+          </div>
+          <div class="field"><label for="description">Description <span class="muted">(optional)</span></label>
+            <textarea id="description" name="description" rows="2" maxlength="1000" placeholder="A short overview of this chapter."></textarea></div>
+          <div class="field"><label for="content">Learning content</label>
+            <textarea id="content" name="content" rows="18" maxlength="200000" placeholder="Write the chapter lesson using Markdown or plain text."></textarea>
+            <p class="field-help muted">Content is stored as text. It is not rendered as trusted HTML.</p></div>
+          <div class="form-actions form-actions-split">
+            <a class="btn btn-ghost" href="/faculty/courses/{{.Course.ID}}/chapters">Cancel</a>
+            <div class="header-actions">
+              <button type="submit" class="btn btn-secondary" name="intent" value="draft">Save as draft</button>
+              <button type="submit" class="btn btn-primary" name="intent" value="publish">Publish chapter</button>
+            </div>
+          </div>
+        </form>
+      </section>
+      {{end}}
+    </main>
+  </div>
+</div>
+{{end}}

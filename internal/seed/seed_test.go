@@ -26,6 +26,24 @@ func TestSeedIdempotent(t *testing.T) {
 	if count != 9 {
 		t.Fatalf("users = %d, want 2 (seed not idempotent)", count)
 	}
+	var chapterCount int
+	if err := db.QueryRow(`SELECT COUNT(1) FROM course_chapters ch
+		JOIN courses c ON c.id = ch.course_id
+		WHERE c.code = 'CS204' AND ch.published = 1`).Scan(&chapterCount); err != nil {
+		t.Fatalf("count seeded chapters: %v", err)
+	}
+	if chapterCount != 2 {
+		t.Fatalf("published demo chapters = %d, want 2", chapterCount)
+	}
+	var title string
+	if err := db.QueryRow(`SELECT ch.title FROM course_chapters ch
+		JOIN courses c ON c.id = ch.course_id
+		WHERE c.code = 'CS204' AND ch.position = 2`).Scan(&title); err != nil {
+		t.Fatalf("load demo Chapter 2: %v", err)
+	}
+	if title != "Relational Model, Keys and Integrity Constraints" {
+		t.Fatalf("demo Chapter 2 title = %q", title)
+	}
 
 	// Password hashes must not contain plaintext.
 	var hashFac, hashStu string

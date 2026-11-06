@@ -194,7 +194,7 @@ go build -o bin/educore .
 go test ./...
 ```
 
-Optional `.env`: `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` to enable real AI evaluation; without them the labeled DEMO mode runs. AI mode expects the OpenAI-compatible chat-completions path (`<AI_BASE_URL>/chat/completions`).
+Optional `.env`: `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` to enable real AI evaluation, the chapter tutor, and quizzes; environment variables override `.env`. Without them the labeled DEMO evaluation mode runs and tutor/quizzes remain disabled. AI mode expects the OpenAI-compatible chat-completions path (`<AI_BASE_URL>/chat/completions`).
 
 ## Phase 5 correction pass (pre-Phase 6) — issues, root causes, fixes, tests
 
@@ -385,3 +385,69 @@ None. Note: port 8080 is occupied on this machine by an unrelated process
   understanding; per-criterion decimal scores are supported (min step 0.5 in
   the faculty UI) while the DB schema keeps historical INTEGER affinity for
   legacy rows.
+
+## AI Learning Studio — Phase 1: Course content foundation
+
+- Added additive migration `005_course_chapters.sql` with course-owned
+  chapters, ordered position, Markdown/plain-text content, publication state
+  (draft by default), timestamps and course/order indexes.
+- Added store CRUD/read operations with faculty course ownership checks,
+  server-side field limits, positive chapter-order validation and a content
+  requirement before publication. Student-facing store reads are scoped to
+  enrolled student accounts and published chapters only.
+- Added faculty chapter list, create and edit pages from the existing course
+  detail flow. Publishing and draft saves return faculty to the chapter
+  management list. The chapter title uses a multiline field matching the
+  description field.
+- Added student published-chapter listing to enrolled course details and a
+  chapter reading page. Student reads are enrollment-scoped and published-only;
+  draft and unenrolled direct requests return not found. The reading-page header
+  displays only the chapter title.
+- No AI calls, evaluation logic, agent tables or submission uploads are
+  involved in this phase.
+- Added store, handler and migration tests for CRUD, chapter ordering,
+  ownership, CSRF, draft/published visibility, invalid inputs and preservation
+  of existing data across migration.
+- Phase 1 verification: `go test ./...`, `go vet ./...`, and
+  `go build -o bin/educore .` (results recorded in the implementation
+  completion report).
+- UX follow-up verification includes publish redirect and student chapter
+  visibility handler tests.
+
+## AI Learning Studio — student experience and AI tutor
+
+- Added the student Learning Studio navigation entry and a dedicated enrolled-course
+  view showing course descriptions and ordered, published chapters only.
+- Added a direct Learning Studio button to each student course overview.
+- Added idempotent showcase content for the seeded Databases course: Chapter 1
+  introduces relational databases and Chapter 2 is "Relational Model, Keys and
+  Integrity Constraints." Existing courses with faculty-created chapters are
+  left untouched by reseeding.
+- Expanded published chapter reading pages into a responsive lesson workspace:
+  course context, chapter description and source material, course outline, guided
+  lesson panel, suggested questions and tutor chat.
+- The guided lesson and chat call the existing OpenAI-compatible provider
+  transport server-side. The learning handlers depend on the provider interface,
+  not the assessment engine; evaluation, agent runs, submissions and uploads are
+  unchanged. Provider configuration comes from the existing `AI_*` settings.
+- Added an AI-generated three-question multiple-choice knowledge check below
+  the guided lesson. Quiz answer keys remain server-side in short-lived,
+  student/course/chapter-bound in-memory quiz sessions; submitted answers are
+  scored on the server and receive per-question explanations. Quiz loading is
+  independent from lesson generation, and response parsing accepts JSON wrapped
+  in common Markdown fences or short provider preambles.
+- Every lesson/chat request re-loads the chapter through the enrolled-student,
+  published-only store query. Requests are CSRF-protected; question length,
+  history length and chapter context are bounded. Chat history stays in the
+  current page and is not persisted.
+- Provider errors return user-friendly messages without returning provider
+  diagnostics, credentials or student prompts. When AI is not configured, the
+  UI reports that state rather than showing a fake response.
+- Tutor chat responses request up to 2,400 output tokens, allow up to 8,000
+  response characters, and ask the model for focused but complete answers.
+- Added handler tests for the course/chapter view, real chapter-context prompt
+  construction, follow-up history, CSRF, invalid input, draft/unenrolled access
+  and provider failures.
+- Verification: `go test ./...`, `go vet ./...`, `go build -o bin/educore .`,
+  and `git diff --check` all pass. Tutor provider behavior is tested with a
+  controlled test stub; no live AI provider request was made during development.

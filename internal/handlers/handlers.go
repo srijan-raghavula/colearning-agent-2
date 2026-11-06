@@ -29,6 +29,7 @@ type Deps struct {
 	CSRF         middleware.CSRF
 	Tpl          map[string]*template.Template
 	AIOn         bool
+	LearningAI   LearningAIProvider
 	Store        *store.Store
 	WorkerNotify chan struct{}
 	AgentEngine  *agent.Engine
@@ -430,6 +431,12 @@ func (d *Deps) Routes() *http.ServeMux {
 	mux.HandleFunc("POST /faculty/courses/{id}", d.CSRFRequire(d.FacultyCourseUpdate))
 	mux.HandleFunc("POST /faculty/courses/{id}/students", d.CSRFRequire(d.FacultyCourseEnroll))
 	mux.HandleFunc("POST /faculty/courses/{id}/students/{studentID}/remove", d.CSRFRequire(d.FacultyCourseUnenroll))
+	mux.HandleFunc("GET /faculty/courses/{courseID}/chapters", d.FacultyChapters)
+	mux.HandleFunc("GET /faculty/courses/{courseID}/chapters/new", d.FacultyChapterNew)
+	mux.HandleFunc("POST /faculty/courses/{courseID}/chapters", d.CSRFRequire(d.FacultyChapterCreate))
+	mux.HandleFunc("GET /faculty/courses/{courseID}/chapters/{chapterID}", d.FacultyChapterEdit)
+	mux.HandleFunc("POST /faculty/courses/{courseID}/chapters/{chapterID}", d.CSRFRequire(d.FacultyChapterUpdate))
+	mux.HandleFunc("POST /faculty/courses/{courseID}/chapters/{chapterID}/delete", d.CSRFRequire(d.FacultyChapterDelete))
 
 	// ----- Faculty: assignments and rubrics -----
 	mux.HandleFunc("GET /faculty/assignments", d.FacultyAssignments)
@@ -468,6 +475,12 @@ func (d *Deps) Routes() *http.ServeMux {
 	mux.HandleFunc("GET /student", d.FacultyOverviewStudent)
 	mux.HandleFunc("GET /student/courses", d.StudentCourses)
 	mux.HandleFunc("GET /student/courses/{id}", d.StudentCourseDetail)
+	mux.HandleFunc("GET /student/courses/{id}/chapters/{chapterID}", d.StudentChapterDetail)
+	mux.HandleFunc("GET /student/learning-studio", d.StudentLearningStudio)
+	mux.HandleFunc("POST /student/courses/{id}/chapters/{chapterID}/lesson", d.CSRFRequire(d.StudentChapterLesson))
+	mux.HandleFunc("POST /student/courses/{id}/chapters/{chapterID}/chat", d.CSRFRequire(d.StudentChapterChat))
+	mux.HandleFunc("POST /student/courses/{id}/chapters/{chapterID}/quiz", d.CSRFRequire(d.StudentChapterQuiz))
+	mux.HandleFunc("POST /student/courses/{id}/chapters/{chapterID}/quiz/submit", d.CSRFRequire(d.StudentChapterQuizSubmit))
 	mux.HandleFunc("GET /student/assignments", d.StudentAssignments)
 	mux.HandleFunc("GET /student/assignments/{id}", d.StudentAssignmentDetail)
 	mux.HandleFunc("POST /student/assignments/{id}/submit", d.CSRFRequire(d.StudentSubmit))

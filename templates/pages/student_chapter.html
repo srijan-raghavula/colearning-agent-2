@@ -1,0 +1,107 @@
+{{define "content"}}
+<div class="app-shell">
+  {{template "sidebar" .}}
+  <div class="app-main">
+    <header class="app-header">
+      <div class="header-title">
+        <h1>{{.Chapter.Title}}</h1>
+      </div>
+      <div class="header-actions">
+        <a class="btn btn-secondary" href="/student/learning-studio">All courses</a>
+      </div>
+    </header>
+    <main class="app-content learning-page">
+      <div class="learning-context-bar">
+        <a href="/student/courses/{{.Course.ID}}">{{.Course.Code}} · {{.Course.Name}}</a>
+        <span>/</span><span>{{.Chapter.Title}}</span>
+      </div>
+      <div class="learning-layout" id="learningStudio"
+           data-course-id="{{.Course.ID}}" data-chapter-id="{{.Chapter.ID}}"
+           data-csrf="{{.CSRFValue}}" data-ai-ready="{{.AIReady}}">
+        <aside class="learning-outline card">
+          <div class="learning-outline-head"><span class="outline-icon">01</span><div><b>Course outline</b><small>{{.Course.Name}}</small></div></div>
+          <nav aria-label="Published chapters" class="learning-outline-list">
+            {{range .Chapters}}
+            <a class="learning-outline-item{{if eq .ID $.Chapter.ID}} is-current{{end}}" href="/student/courses/{{$.Course.ID}}/chapters/{{.ID}}">
+              <span>{{.Position}}</span><b>{{.Title}}</b>
+            </a>
+            {{end}}
+          </nav>
+          <div class="outline-course-link"><a href="/student/courses/{{.Course.ID}}">Course overview →</a></div>
+        </aside>
+
+        <section class="learning-lesson-column">
+          <article class="card lesson-intro">
+            <div class="lesson-eyebrow"><span class="lesson-dot"></span> CHAPTER {{.Chapter.Position}} <span>·</span> GUIDED LEARNING</div>
+            <h2>{{.Chapter.Title}}</h2>
+            {{if .Chapter.Description}}<p>{{.Chapter.Description}}</p>{{end}}
+          </article>
+          <article class="card ai-lesson-card" aria-live="polite">
+            <div class="ai-section-heading">
+              <span class="ai-mark">✦</span>
+              <div><h3>Your guided lesson</h3><p class="muted small">A chapter-based explanation prepared by your AI tutor</p></div>
+              <span class="badge badge-info">AI TUTOR</span>
+            </div>
+            <div id="lessonStatus" class="lesson-status{{if not .AIReady}} is-error{{end}}">
+              {{if .AIReady}}Preparing a clear, chapter-based explanation…{{else}}The AI tutor is not configured right now. You can still read the chapter material below.{{end}}
+            </div>
+            <div id="lessonContent" class="generated-lesson" hidden></div>
+            <button type="button" class="btn btn-secondary btn-sm" id="retryLesson" hidden>Try again</button>
+          </article>
+          <section class="card quick-quiz-card" aria-live="polite">
+            <div class="quiz-heading">
+              <span class="quiz-icon">?</span>
+              <div><h3>Quick knowledge check</h3><p class="muted small">A short quiz based on this chapter. Earn one point for each correct answer.</p></div>
+              <span class="badge badge-info">3 POINTS</span>
+            </div>
+            <div class="quiz-status{{if not .AIReady}} is-error{{end}}" id="quizStatus">
+              {{if .AIReady}}A three-question check will appear after your guided lesson loads.{{else}}The AI tutor is not configured, so a chapter quiz is unavailable right now.{{end}}
+            </div>
+            <form id="quickQuiz" hidden>
+              <div id="quizQuestions"></div>
+              <div class="quiz-submit-row">
+                <span class="muted small">Select one answer for each question.</span>
+                <button type="submit" class="btn btn-primary" id="submitQuiz">Check my answers</button>
+              </div>
+            </form>
+            <div id="quizResult" hidden></div>
+            <button type="button" class="btn btn-secondary btn-sm" id="retryQuiz" hidden>Try again</button>
+          </section>
+          <details class="card source-material">
+            <summary><span><b>Chapter source material</b><small>Open the instructor's original lesson text</small></span><span class="source-chevron">⌄</span></summary>
+            <div class="student-chapter-content"><pre>{{.Chapter.Content}}</pre></div>
+          </details>
+        </section>
+
+        <aside class="card tutor-panel">
+          <div class="tutor-heading">
+            <span class="tutor-avatar">✦</span>
+            <div><h3>AI Tutor</h3><p><span class="online-dot"></span> Chapter-aware learning assistant</p></div>
+          </div>
+          <div class="suggested-questions">
+            <span class="suggestion-label">TRY ASKING</span>
+            <button type="button" class="suggestion-chip">Explain the most important concepts</button>
+            <button type="button" class="suggestion-chip">Give me a real-world example</button>
+            <button type="button" class="suggestion-chip">Explain this chapter as a beginner</button>
+          </div>
+          <div class="chat-messages" id="chatMessages" aria-live="polite">
+            <div class="chat-welcome">
+              <span class="chat-welcome-icon">✦</span>
+              <b>Hi {{.UserName}}! Let's learn this together.</b>
+              <p>Ask me anything about <strong>{{.Chapter.Title}}</strong>. I’ll use this chapter as our guide.</p>
+            </div>
+          </div>
+          <div class="chat-error" id="chatError" role="alert" hidden></div>
+          <form class="chat-compose" id="tutorForm">
+            <label for="tutorQuestion" class="sr-only">Ask a question about this chapter</label>
+            <textarea id="tutorQuestion" rows="2" maxlength="2000" placeholder="Ask a question about this chapter…" {{if not .AIReady}}disabled{{end}}></textarea>
+            <button type="submit" id="sendQuestion" aria-label="Send question" {{if not .AIReady}}disabled{{end}}>↑</button>
+          </form>
+          <p class="tutor-disclaimer">AI responses are generated from the chapter content. Verify important details with your instructor.</p>
+        </aside>
+      </div>
+    </main>
+  </div>
+</div>
+<script src="/static/js/learning-studio.js?v=2" defer></script>
+{{end}}
